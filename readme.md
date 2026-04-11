@@ -23,6 +23,29 @@ For many 2D games and stylized apps, pre-rendered glyphs give you **predictable 
 
 ---
 
+## Engine & platform compatibility
+
+Exports are a **PNG atlas** plus **BMFont-compatible** layout files (the same family of formats produced by [AngelCode BMFont](http://www.angelcode.com/products/bmfont/)). Anything that can load **`.fnt` / XML / binary / JSON + texture** (or you wire a small loader) can use these assets.
+
+| Area | Examples |
+|------|----------|
+| **Flash / Stage3D** | [Starling](https://gamua.com/starling/) — `BitmapFont` + texture. |
+| **iOS (legacy)** | [Sparrow](https://github.com/PrimaryFeather/Sparrow-Framework) — bitmap font + atlas (same general pipeline as Starling). |
+| **Cocos** | **Cocos2d-x**, **Cocos Creator** — bitmap / BMFont-style labels (`LabelBMFont`, Creator **Label** with BMFont). The original **Cocos2d** (Objective-C) is unmaintained; Creator is the active Cocos product line. |
+| **Java / Kotlin** | [LibGDX](https://libgdx.com/) — `BitmapFont` from BMFont exports. |
+| **C# / .NET** | [MonoGame](https://www.monogame.net/), [FNA](https://github.com/FNA-XNA/FNA) — `SpriteFont`-style content or BMFont loaders from the community. |
+| **Godot** | [BitmapFont](https://docs.godotengine.org/) — import `.fnt` + image (check version docs for exact import path). |
+| **Lua** | [LÖVE](https://love2d.org/) — via libraries that read BMFont data; [Defold](https://defold.com/) — bitmap font from `.fnt` + texture. |
+| **Haxe** | [Heaps](https://heaps.io/), [OpenFL](https://www.openfl.org/) / HaxeFlixel — bitmap text pipelines. |
+| **JavaScript / TypeScript** | [Phaser](https://phaser.io/), [PixiJS](https://pixijs.com/) — bitmap/XML font workflows. |
+| **Unity** | Not the native TextMeshPro pipeline; use **Asset Store** or community **BMFont importers** that consume XML/JSON + PNG. |
+| **Unreal Engine** | Not a first-class UI font format; use **plugins** or a **custom importer** for atlas + metrics. |
+| **Custom engines** | Any toolkit that parses BMFont fields and samples the atlas. |
+
+If your stack is not listed, search for **“BMFont”**, **“AngelCode font”**, or **“bitmap font `.fnt`”** in that engine’s docs or asset store—support is usually a small importer or built-in bitmap label type.
+
+---
+
 <p align="center">
   <img src="docs/icon.png" alt="Sprite Glypher app icon" width="128" height="128" />
 </p>
