@@ -1,0 +1,15 @@
+# Qt Creator — local machine / IDE version specific (do not commit)
+*.pro.user
+*.pro.user.*
+.qtcreator/
+
+# Build artifacts
+debug/
+release/
+build-*/
+*.o
+*.obj
+Makefile*
+ui_*.h
+moc_*.cpp
+qrc_*.cpp

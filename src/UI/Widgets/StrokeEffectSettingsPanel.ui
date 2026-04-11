@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>StrokeEffectSettingsPanel</class>
+ <widget class="QWidget" name="StrokeEffectSettingsPanel">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>180</width>
+    <height>160</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>180</width>
+    <height>130</height>
+   </size>
+  </property>
+  <property name="font">
+   <font>
+    <pointsize>12</pointsize>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>4</number>
+   </property>
+   <property name="topMargin">
+    <number>4</number>
+   </property>
+   <property name="rightMargin">
+    <number>4</number>
+   </property>
+   <property name="bottomMargin">
+    <number>2</number>
+   </property>
+   <item>
+    <layout class="QGridLayout" name="gridLayout_7">
+     <property name="horizontalSpacing">
+      <number>4</number>
+     </property>
+     <property name="verticalSpacing">
+      <number>4</number>
+     </property>
+     <item row="0" column="0" colspan="2">
+      <widget class="QLabel" name="labelBlend">
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: #a8a8a8;</string>
+       </property>
+       <property name="text">
+        <string>Blend</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="QComboBox" name="comboBoxBlend">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" colspan="2">
+      <widget class="QLabel" name="labelOpacity">
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: #a8a8a8;</string>
+       </property>
+       <property name="text">
+        <string>Opacity</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" colspan="2">
+      <widget class="SGValueSliderRow" name="rowOpacity" native="true"/>
+     </item>
+     <item row="4" column="0" colspan="2">
+      <widget class="QLabel" name="labelPosition">
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: #a8a8a8;</string>
+       </property>
+       <property name="text">
+        <string>Position</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0" colspan="2">
+      <widget class="SGSegmentedControl" name="segStrokePosition" native="true"/>
+     </item>
+     <item row="6" column="0" colspan="2">
+      <widget class="QLabel" name="labelColor">
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: #a8a8a8;</string>
+       </property>
+       <property name="text">
+        <string>Color</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0" colspan="2">
+      <widget class="ColorSwatchWidget" name="colorSwatch" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>22</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0" colspan="2">
+      <widget class="QLabel" name="labelWidth">
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: #a8a8a8;</string>
+       </property>
+       <property name="text">
+        <string>Width</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0" colspan="2">
+      <widget class="SGValueSliderRow" name="rowWidth" native="true"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ColorSwatchWidget</class>
+   <extends>QWidget</extends>
+   <header>src/UI/Widgets/ColorSwatchWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SGValueSliderRow</class>
+   <extends>QWidget</extends>
+   <header>src/UI/Widgets/SGValueSliderRow.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SGSegmentedControl</class>
+   <extends>QWidget</extends>
+   <header>src/UI/Widgets/SGSegmentedControl.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

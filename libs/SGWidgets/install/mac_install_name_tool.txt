@@ -1,0 +1,5 @@
+install_name_tool -change "/Users/fluocode/Qt5.2.1/5.2.1/clang_64/lib/QtDesigner.framework/Versions/5/QtDesigner" "@loader_path/../../Frameworks/QtDesigner.framework/Versions/5/QtDesigner" libSGWidgets.dylib
+install_name_tool -change "/Users/fluocode/Qt5.2.1/5.2.1/clang_64/lib/QtWidgets.framework/Versions/5/QtWidgets" "@loader_path/../../Frameworks/QtWidgets.framework/Versions/5/QtWidgets" libSGWidgets.dylib
+install_name_tool -change "/Users/fluocode/Qt5.2.1/5.2.1/clang_64/lib/QtGui.framework/Versions/5/QtGui" "@loader_path/../../Frameworks/QtGui.framework/Versions/5/QtGui" libSGWidgets.dylib
+install_name_tool -change "/Users/fluocode/Qt5.2.1/5.2.1/clang_64/lib/QtCore.framework/Versions/5/QtCore" "@loader_path/../../Frameworks/QtCore.framework/Versions/5/QtCore" libSGWidgets.dylib
+install_name_tool -change "/Users/fluocode/Qt5.2.1/5.2.1/clang_64/lib/QtXml.framework/Versions/5/QtXml" "@loader_path/../../Frameworks/QtXml.framework/Versions/5/QtXml" libSGWidgets.dylib
