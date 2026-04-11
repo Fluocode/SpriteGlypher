@@ -35,8 +35,13 @@ For many 2D games and stylized apps, pre-rendered glyphs give you **predictable 
 
 ## Download
 
-Ready-to-run builds are published via **[fluocode.com](https://www.fluocode.com/)**.
+Windows release https://github.com/Fluocode/SpriteGlypher/releases/download/Windows/SpriteGlypher.exe
 
 ---
 
 Sprite Glypher is an independent open-source project.
+
+***
+If You like what I make please donate:
+[![Foo](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4QBWVDKEVRL46)
+*** 
