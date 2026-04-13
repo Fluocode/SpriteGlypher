@@ -58,7 +58,13 @@ If your engine is not listed, check its documentation for **bitmap fonts**, **`.
 
 ## Download
 
-Windows release [https://github.com/Fluocode/SpriteGlypher/releases/download/Windows/SpriteGlypher.exe](https://github.com/Fluocode/SpriteGlypher/releases/download/release/SpriteGlypher.exe)
+<p align="center">
+Windows release https://github.com/Fluocode/SpriteGlypher/releases/download/release/SpriteGlypher.exe
+</p>
+
+<p align="center">
+Mac release https://github.com/Fluocode/SpriteGlypher/releases/download/Mac/SpriteGlypher.dmg
+</p>
 
 ---
 
