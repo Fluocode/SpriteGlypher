@@ -59,7 +59,7 @@ If your engine is not listed, check its documentation for **bitmap fonts**, **`.
 ## Download
 
 <p align="center">
-Windows release https://github.com/Fluocode/SpriteGlypher/releases/download/release/SpriteGlypher.exe
+Windows release https://github.com/Fluocode/SpriteGlypher/releases/download/Windows/SpriteGlypher.exe
 </p>
 
 <p align="center">
