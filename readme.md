@@ -54,6 +54,14 @@ If your engine is not listed, check its documentation for **bitmap fonts**, **`.
   <img src="docs/screenshot-main.png" alt="Sprite Glypher main window" width="90%" />
 </p>
 
+<p align="center">
+  <img src="docs/manylayers.jpg" alt="Sprite Glypher main window" width="90%" />
+</p>
+
+<p align="center">
+  <img src="docs/shader.jpg" alt="Sprite Glypher main window" width="90%" />
+</p>
+
 ---
 
 ## Download
