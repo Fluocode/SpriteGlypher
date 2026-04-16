@@ -28,21 +28,37 @@ For many 2D games and stylized apps, pre-rendered glyphs give you **predictable 
 Effects are applied as a **layer stack**. Use these as building blocks to get a stylized look while keeping clean spacing/metrics for game engines.
 
 - **Fill**: The base glyph “ink” (solid color). This is typically the main visible letter.
-  - Image placeholder: `docs/effect-fill.png`
+  - Preview image: `docs/effect-fill.png`
+
+![Fill effect preview](docs/effect-fill.png)
 - **Stroke**: Outline around the glyph. Supports **Color / Gradient / Pattern** stroke fills.
-  - Image placeholder: `docs/effect-stroke.png`
+  - Preview image: `docs/effect-stroke.png`
+
+![Stroke effect preview](docs/effect-stroke.png)
 - **Shadow**: Traditional shadow layer (aesthetic). Can be used for depth; **shadow pixels are allowed to overlap** (does not change spacing).
-  - Image placeholder: `docs/effect-shadow.png`
+  - Preview image: `docs/effect-shadow.png`
+
+![Shadow effect preview](docs/effect-shadow.png)
 - **Underlay**: “Solid base” behind the glyph (no blur, outer-only). Use this when you want a shadow-like shape that **must affect spacing** (acts like real glyph volume).
-  - Image placeholder: `docs/effect-underlay.png`
+  - Preview image: `docs/effect-underlay.png`
+
+![Underlay effect preview](docs/effect-underlay.png)
 - **Outer Glow**: Soft glow outside the glyph. Purely aesthetic; **does not affect spacing**.
-  - Image placeholder: `docs/effect-outer-glow.png`
+  - Preview image: `docs/effect-outer-glow.png`
+
+![Outer Glow effect preview](docs/effect-outer-glow.png)
 - **Inner Highlight**: Highlight inside the glyph edges (inset + height). Purely aesthetic; **does not affect spacing**.
-  - Image placeholder: `docs/effect-inner-highlight.png`
+  - Preview image: `docs/effect-inner-highlight.png`
+
+![Inner Highlight effect preview](docs/effect-inner-highlight.png)
 - **Sparkle Overlay**: Pattern overlay (default sparks texture) blended over the glyph for “glitter” looks. Purely aesthetic; **does not affect spacing**.
-  - Image placeholder: `docs/effect-sparkle-overlay.png`
+  - Preview image: `docs/effect-sparkle-overlay.png`
+
+![Sparkle Overlay effect preview](docs/effect-sparkle-overlay.png)
 - **Shaded Material**: Material-like shading pass for stylized lighting (optional).
-  - Image placeholder: `docs/effect-shaded-material.png`
+  - Preview image: `docs/effect-shaded-material.png`
+
+![Shaded Material effect preview](docs/effect-shaded-material.png)
 
 ---
 
@@ -68,7 +84,6 @@ Exports are a **PNG atlas** plus **layout data** (ASCII, XML, binary, or JSON). 
 If your engine is not listed, check its documentation for **bitmap fonts**, **`.fnt`**, or **sprite font** import—support is often a built-in bitmap label type or a small importer.
 
 ---
-
 
 <p align="center">
   <img src="docs/icon.png" alt="Sprite Glypher app icon" width="128" height="128" />
