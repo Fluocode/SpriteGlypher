@@ -49,6 +49,8 @@ public:
 public:
     SGFShadowEffect();
 
+    bool affectsAdvance() const override { return false; }
+
 
     // Abstract Methods
 public:

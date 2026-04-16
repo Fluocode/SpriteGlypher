@@ -9,6 +9,10 @@ enum SGFEffectType
 {
     Effect_Fill,
     Effect_Shadow,
+    Effect_Underlay,
+    Effect_OuterGlow,
+    Effect_InnerHighlight,
+    Effect_SparkleOverlay,
     Effect_Stroke,
     Effect_ShadedMaterial,
     Effect_Unknown

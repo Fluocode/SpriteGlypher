@@ -139,6 +139,7 @@ void SGFShadowEffect::applyToGlyph(SGFGlyph& glyph)
         painter.setCompositionMode(compositionForBlendMode(mBlendMode));
         painter.setOpacity(settings.opacity);
         painter.drawImage(0, 0, glyph.tempImage);
+        painter.end();
     }
 }
 

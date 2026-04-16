@@ -93,6 +93,9 @@ public:
     /** Get a preview icon for this effect. */
     virtual QPixmap getPreview(int width, int height, int pointSize);
 
+    /** Should this effect contribute to text advance / spacing (xadvance)? */
+    virtual bool affectsAdvance() const { return true; }
+
 
     // Managing Settings on this Effect
 public:

@@ -10,6 +10,10 @@ SGFEffectType SGFEffectTypes::EffectTypeFromString(const QString & value)
 
     if      ( lower.compare("fill") == 0 )        { return SGFEffectType::Effect_Fill; }
     else if ( lower.compare("shadow") == 0 )      { return SGFEffectType::Effect_Shadow; }
+    else if ( lower.compare("underlay") == 0 )    { return SGFEffectType::Effect_Underlay; }
+    else if ( lower.compare("outerglow") == 0 || lower.compare("outer glow") == 0 ) { return SGFEffectType::Effect_OuterGlow; }
+    else if ( lower.compare("innerhighlight") == 0 || lower.compare("inner highlight") == 0 ) { return SGFEffectType::Effect_InnerHighlight; }
+    else if ( lower.compare("sparkleoverlay") == 0 || lower.compare("sparkle overlay") == 0 ) { return SGFEffectType::Effect_SparkleOverlay; }
     else if ( lower.compare("stroke") == 0 )      { return SGFEffectType::Effect_Stroke; }
     else if ( lower.compare("shadedmaterial") == 0 || lower.compare("shaded material") == 0 ) {
         return SGFEffectType::Effect_ShadedMaterial;
@@ -24,6 +28,10 @@ QString SGFEffectTypes::EffectTypeToString(SGFEffectType value)
     switch(value) {
         case SGFEffectType::Effect_Fill:    return QString("Fill");
         case SGFEffectType::Effect_Shadow:  return QString("Shadow");
+        case SGFEffectType::Effect_Underlay:  return QString("Underlay");
+        case SGFEffectType::Effect_OuterGlow:  return QString("Outer Glow");
+        case SGFEffectType::Effect_InnerHighlight:  return QString("Inner Highlight");
+        case SGFEffectType::Effect_SparkleOverlay:  return QString("Sparkle Overlay");
         case SGFEffectType::Effect_Stroke:  return QString("Stroke");
         case SGFEffectType::Effect_ShadedMaterial: return QString("Shaded Material");
         default: return QString("Unknown");

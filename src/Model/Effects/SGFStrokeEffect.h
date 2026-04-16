@@ -2,6 +2,7 @@
 #define SGFSTROKEEFFECT_H
 
 #include "SGFEffect.h"
+#include "../SGFTypes.h"
 
 
 struct SGFStrokeEffectSettings
@@ -10,7 +11,10 @@ struct SGFStrokeEffectSettings
     SGFBlendMode blendMode;     //< Blend mode for this effect.
     float opacity;              //< Blend opacity for this effect.
     float width;                //< Stroke Width.
-    QColor color;               //< Stroke Color.
+    SGFFillType fillType;       //< Color, Gradient or Pattern Stroke?
+    QColor color;               //< Color - Used only for Color mode.
+    SGFGradient gradient;       //< Gradient - Used only for Gradient mode.
+    SGFPattern pattern;         //< Pattern - Used only for Pattern mode.
     SGFStrokePosition position; //< Stroke position.
 
     SGFStrokeEffectSettings() :
@@ -18,10 +22,13 @@ struct SGFStrokeEffectSettings
         blendMode(SGFBlendMode::Blend_Normal),
         opacity(1.0f),
         width(3),
+        fillType(SGFFillType::Fill_Color),
         color(QColor(QStringLiteral("#876500"))),
+        gradient(),
+        pattern(),
         position(SGFStrokePosition::Stroke_Outside)
     {
-
+        gradient.setDefaultLinearGradient();
     }
 };
 
@@ -35,7 +42,11 @@ public:
 
 public:
     static const QString kWidthKey;
+    static const QString kFillTypeKey;
     static const QString kColorKey;
+    static const QString kGradientKey;
+    static const QString kPatternElementKey;
+    static const QString kPatternScaleKey;
     static const QString kPositionKey;
 
 public:

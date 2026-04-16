@@ -13,8 +13,12 @@
 #include "UI/Widgets/GenerationSettingsPanel.h"
 #include "UI/Widgets/FillEffectSettingsPanel.h"
 #include "UI/Widgets/ShadowEffectSettingsPanel.h"
+#include "UI/Widgets/UnderlayEffectSettingsPanel.h"
 #include "UI/Widgets/StrokeEffectSettingsPanel.h"
 #include "UI/Widgets/ShadedMaterialEffectSettingsPanel.h"
+#include "UI/Widgets/OuterGlowEffectSettingsPanel.h"
+#include "UI/Widgets/InnerHighlightEffectSettingsPanel.h"
+#include "UI/Widgets/SparkleOverlayEffectSettingsPanel.h"
 #include "UI/Widgets/EffectListRow.h"
 
 
@@ -27,7 +31,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = nullptr, const QString &initialFile = QString());
 
     ~MainWindow();
 
@@ -57,6 +61,9 @@ public:
 
 
 private:
+    /** Try to load a document from disk; returns true on success. On failure, shows a warning (unless the path is missing). */
+    bool openDocumentFromPath(const QString &path);
+
     /** Simply returns the index of the effect currently selected in the UI. */
     int selectedEffectIndex();
 
@@ -89,6 +96,8 @@ private slots:
 
     void on_toolButtonZoomReset_clicked();
 
+    void on_zoomSlider_valueChanged(int value);
+
     void on_actionSave_triggered();
 
     void on_actionOpen_triggered();
@@ -98,6 +107,12 @@ private slots:
     void on_actionAdd_Fill_triggered();
 
     void on_actionAdd_Shadow_triggered();
+
+    void on_actionAdd_Underlay_triggered();
+
+    void on_actionAdd_Outer_Glow_triggered();
+    void on_actionAdd_Inner_Highlight_triggered();
+    void on_actionAdd_Sparkle_Overlay_triggered();
 
     void on_actionAdd_Stroke_triggered();
 

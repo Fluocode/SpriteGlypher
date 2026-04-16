@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include <QApplication>
 #include <QCoreApplication>
+#include <QStringList>
 
 int main(int argc, char *argv[])
 {
@@ -8,7 +9,18 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
 
     QApplication a(argc, argv);
-    MainWindow w;
+
+    QString initialFile;
+    const QStringList args = QCoreApplication::arguments();
+    for ( int i = 1; i < args.size(); ++i ) {
+        const QString &p = args[i];
+        if ( p.endsWith(QLatin1String(".sgf"), Qt::CaseInsensitive) ) {
+            initialFile = p;
+            break;
+        }
+    }
+
+    MainWindow w(nullptr, initialFile);
     w.show();
 
     return a.exec();

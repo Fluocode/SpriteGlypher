@@ -29,7 +29,7 @@ public:
 public:
     int width;          //< -1 for auto, otherwise measured in pixels.
     int height;         //< -1 for auto, otherwise measured in pixels.
-    QColor color;       //< Color of background texture.
+    QColor color;       //< Preview-only backdrop in the atlas view (contrast for strokes/shadows). Never baked into the exported PNG.
     int padding;        //< Pixel padding around the edge of the texture.
     int spacing;        //< Minimum pixel spacing between glyphs.
 

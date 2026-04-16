@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "SpriteGlypher"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.0.3"
 #define MyAppPublisher "Fluocode"
 #define MyAppURL "https://www.fluocode.com/"
 #define MyAppExeName "SpriteGlypher.exe"
@@ -49,8 +49,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\esdeb\Documentos\_PROJECTS\SpriteGlypher\build\Desktop_Qt_6_11_0_MinGW_64_bit-Release\release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\esdeb\Documentos\_PROJECTS\SpriteGlypher\build\Desktop_Qt_6_11_0_MinGW_64_bit-Release\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\esdeb\Documentos\_PROJECTS\SpriteGlypher\dist\windows\SpriteGlypher\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\esdeb\Documentos\_PROJECTS\SpriteGlypher\dist\windows\SpriteGlypher\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

@@ -27,6 +27,8 @@ private slots:
     void subWidgetValueChanged();
 
 private:
+    void refreshVisibleElements();
+
     Ui::StrokeEffectSettingsPanel *ui;
     bool mIsUpdatingGui;
     SGFStrokeEffectSettings mValue;

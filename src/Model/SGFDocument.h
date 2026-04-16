@@ -69,6 +69,8 @@ public:
     SGFEffect::Ptr getEffectAtIndex(int index);
     void addEffect(SGFEffect::Ptr effect);
     void insertEffect(int index, SGFEffect::Ptr effect);
+    /** Replace effect order (same count, typically a permutation). Paint order remains index 0 .. n-1. */
+    void reorderEffects(const QVector<SGFEffect::Ptr> &effects);
     void removeEffect(SGFEffect::Ptr effect);
     void removeEffect(int index);
 

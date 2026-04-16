@@ -53,6 +53,7 @@ public:
 
     QSize baseSize;    //< Size of just the glyph, so we can later calculate difference between the
     SGFPadding effectPadding;   //< How much additional padding have we added on top of the original glyph?
+    SGFPadding advancePadding;  //< Padding that should contribute to spacing (excludes pure shadows).
     QRect atlasRect;        //< Output from the generation process
 
     QVector<KerningPair> kerningPairs;  //< Vector of kerning pairs

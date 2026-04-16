@@ -14,7 +14,11 @@ TEMPLATE = app
 macx {
     QMAKE_CXXFLAGS += -stdlib=libc++
     QMAKE_LFLAGS += -stdlib=libc++
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
+    # Apple Silicon + Intel universal binary (Finder → Get Info shows “Universal”).
+    # Requires a Qt macOS kit that includes both architectures.
+    QMAKE_APPLE_DEVICE_ARCHS = arm64 x86_64
+    # Qt 6 headers use std::filesystem; Apple libc++ only enables it for macOS 10.15+.
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.15
     QMAKE_INFO_PLIST = "platforms/osx/Info.plist"
     APP_ICON.files = "platforms/osx/spriteglypher.icns"
     APP_ICON.path = Contents/Resources/
@@ -27,6 +31,9 @@ ios {
 
 win32 {
     QMAKE_LFLAGS += -static-libgcc
+
+    # Avoid Windows headers breaking std::min/std::max (some Qt toolchains pull in min/max macros).
+    DEFINES += NOMINMAX
 
     # Icon RC File
     RC_FILE = "platforms/win/spriteglypher.rc"
@@ -50,11 +57,21 @@ Debug:MOC_DIR = debug/.moc
 Debug:RCC_DIR = debug/.rcc
 Debug:UI_DIR = debug/.ui
 
+# Windows Release: build a distributable folder under dist/windows/ (no repo root clutter).
 # Must run after Release:/Debug: set DESTDIR to a single relative segment (e.g. release\), not OUT_PWD/release.
 # Use an explicit ".exe": $$TARGET$$TARGET_EXT often expands without the extension here, and windeployqt then skips deployment.
-win32 {
+win32:CONFIG(release, debug|release) {
     DEPLOY_EXE = $$OUT_PWD/$$DESTDIR/$${TARGET}.exe
     QMAKE_POST_LINK += $$quote($$[QT_INSTALL_BINS]/windeployqt.exe) $$quote($$shell_path($$DEPLOY_EXE)) --compiler-runtime $$escape_expand(\\n\\t)
+    # Pass DistRoot explicitly: in some build contexts PowerShell can't resolve script path reliably.
+    QMAKE_POST_LINK += powershell -NoProfile -ExecutionPolicy Bypass -File $$quote($$shell_path($$PWD/tools/package-windows.ps1)) -ExePath $$quote($$shell_path($$DEPLOY_EXE)) -DistRoot $$quote($$shell_path($$PWD/dist/windows)) $$escape_expand(\\n\\t)
+}
+
+# Release only: bundle Qt into the .app, then create SpriteGlypher.dmg next to it (macdeployqt -dmg).
+macx:CONFIG(release, debug|release) {
+    DEPLOY_APP = $$clean_path($$OUT_PWD/$$DESTDIR/$${TARGET}.app)
+    QMAKE_POST_LINK += $$quote($$[QT_INSTALL_BINS]/macdeployqt) $$quote($$shell_path($$DEPLOY_APP)) -dmg $$escape_expand(\\n\\t)
+    QMAKE_POST_LINK += $$quote($$shell_path($$PWD/tools/package-macos.sh)) $$quote($$shell_path($$DEPLOY_APP)) --dmg $$escape_expand(\\n\\t)
 }
 
 FORMS += \
@@ -65,6 +82,10 @@ FORMS += \
     src/UI/Widgets/FillEffectSettingsPanel.ui \
     src/UI/Widgets/StrokeEffectSettingsPanel.ui \
     src/UI/Widgets/ShadowEffectSettingsPanel.ui \
+    src/UI/Widgets/UnderlayEffectSettingsPanel.ui \
+    src/UI/Widgets/OuterGlowEffectSettingsPanel.ui \
+    src/UI/Widgets/InnerHighlightEffectSettingsPanel.ui \
+    src/UI/Widgets/SparkleOverlayEffectSettingsPanel.ui \
     src/UI/Widgets/ShadedMaterialEffectSettingsPanel.ui \
     src/UI/Widgets/EffectListRow.ui \
     src/UI/Widgets/ExportSettingsPanel.ui
@@ -79,6 +100,10 @@ HEADERS += \
     src/Model/Effects/SGFFillEffect.h \
     src/Model/Effects/SGFStrokeEffect.h \
     src/Model/Effects/SGFShadowEffect.h \
+    src/Model/Effects/SGFUnderlayEffect.h \
+    src/Model/Effects/SGFOuterGlowEffect.h \
+    src/Model/Effects/SGFInnerHighlightEffect.h \
+    src/Model/Effects/SGFSparkleOverlayEffect.h \
     src/Model/Effects/SGFShadedMaterialEffect.h \
     src/Model/Effects/SGFEffectTypes.h \
     src/Model/Effects/Effects.h \
@@ -100,6 +125,10 @@ HEADERS += \
     src/UI/Widgets/FillEffectSettingsPanel.h \
     src/UI/Widgets/StrokeEffectSettingsPanel.h \
     src/UI/Widgets/ShadowEffectSettingsPanel.h \
+    src/UI/Widgets/UnderlayEffectSettingsPanel.h \
+    src/UI/Widgets/OuterGlowEffectSettingsPanel.h \
+    src/UI/Widgets/InnerHighlightEffectSettingsPanel.h \
+    src/UI/Widgets/SparkleOverlayEffectSettingsPanel.h \
     src/UI/Widgets/ShadedMaterialEffectSettingsPanel.h \
     src/Model/SGFFile/SGFFileWriter.h \
     src/Model/SGFFile/SGFDocumentElement.h \
@@ -125,6 +154,10 @@ SOURCES += \
     src/Model/Effects/SGFFillEffect.cpp \
     src/Model/Effects/SGFStrokeEffect.cpp \
     src/Model/Effects/SGFShadowEffect.cpp \
+    src/Model/Effects/SGFUnderlayEffect.cpp \
+    src/Model/Effects/SGFOuterGlowEffect.cpp \
+    src/Model/Effects/SGFInnerHighlightEffect.cpp \
+    src/Model/Effects/SGFSparkleOverlayEffect.cpp \
     src/Model/Effects/SGFShadedMaterialEffect.cpp \
     src/UI/Widgets/GradientSwatchWidget.cpp \
     src/UI/Dialogs/GradientEditorDialog.cpp \
@@ -143,6 +176,10 @@ SOURCES += \
     src/Model/Effects/SGFEffectTypes.cpp \
     src/UI/Widgets/StrokeEffectSettingsPanel.cpp \
     src/UI/Widgets/ShadowEffectSettingsPanel.cpp \
+    src/UI/Widgets/UnderlayEffectSettingsPanel.cpp \
+    src/UI/Widgets/OuterGlowEffectSettingsPanel.cpp \
+    src/UI/Widgets/InnerHighlightEffectSettingsPanel.cpp \
+    src/UI/Widgets/SparkleOverlayEffectSettingsPanel.cpp \
     src/UI/Widgets/ShadedMaterialEffectSettingsPanel.cpp \
     src/Model/SGFFile/SGFFileWriter.cpp \
     src/Model/SGFFile/SGFDocumentElement.cpp \

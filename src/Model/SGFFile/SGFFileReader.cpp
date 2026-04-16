@@ -8,6 +8,10 @@ SGFFileReader::SGFFileReader()
 
 }
 
+QString SGFFileReader::lastError()
+{
+    return mLastError;
+}
 
 SGFDocument::Ptr SGFFileReader::loadDocument(const QString &path)
 {

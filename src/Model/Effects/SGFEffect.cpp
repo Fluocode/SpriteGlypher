@@ -2,6 +2,10 @@
 
 #include "SGFFillEffect.h"
 #include "SGFShadowEffect.h"
+#include "SGFUnderlayEffect.h"
+#include "SGFOuterGlowEffect.h"
+#include "SGFInnerHighlightEffect.h"
+#include "SGFSparkleOverlayEffect.h"
 #include "SGFStrokeEffect.h"
 #include "SGFShadedMaterialEffect.h"
 
@@ -19,6 +23,10 @@ SGFEffect::Ptr SGFEffect::CreateEffectFromType(const SGFEffectType &effectType)
     {
         case SGFEffectType::Effect_Fill: return SGFEffect::Ptr(new SGFFillEffect());
         case SGFEffectType::Effect_Shadow: return SGFEffect::Ptr(new SGFShadowEffect());
+        case SGFEffectType::Effect_Underlay: return SGFEffect::Ptr(new SGFUnderlayEffect());
+        case SGFEffectType::Effect_OuterGlow: return SGFEffect::Ptr(new SGFOuterGlowEffect());
+        case SGFEffectType::Effect_InnerHighlight: return SGFEffect::Ptr(new SGFInnerHighlightEffect());
+        case SGFEffectType::Effect_SparkleOverlay: return SGFEffect::Ptr(new SGFSparkleOverlayEffect());
         case SGFEffectType::Effect_Stroke: return SGFEffect::Ptr(new SGFStrokeEffect());
         case SGFEffectType::Effect_ShadedMaterial: return SGFEffect::Ptr(new SGFShadedMaterialEffect());
         default: return SGFEffect::Ptr(nullptr);

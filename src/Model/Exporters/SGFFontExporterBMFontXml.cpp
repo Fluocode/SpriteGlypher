@@ -79,6 +79,8 @@ bool SGFFontExporterBMFontXml::writeDocumentToPath(SGFDocument *doc, const QStri
     writer.setAutoFormatting(true);
     writer.writeStartDocument();
     writer.writeStartElement(QStringLiteral("font"));
+    // If this comment is missing after export, the .fnt was not written by this build (wrong path or old exe).
+    writer.writeComment(QStringLiteral(" SpriteGlypher 1.0.3 bmfont-xml "));
 
     writer.writeStartElement(QStringLiteral("info"));
     writer.writeAttribute(QStringLiteral("face"), data.face);

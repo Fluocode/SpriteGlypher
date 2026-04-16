@@ -12,7 +12,8 @@ const QString SGFGenerationSettings::kSpacingKey = QString("spacing");
 SGFGenerationSettings::SGFGenerationSettings() :
     width(0),
     height(0),
-    color(QColor(0,0,0,0)),
+    // Preview backdrop only (see MainWindow atlas view). Not written into the exported texture.
+    color(QColor(0, 0, 0, 128)),
     padding(2),
     spacing(2)
 {
@@ -23,7 +24,8 @@ SGFGenerationSettings::SGFGenerationSettings() :
 SGFGenerationSettings::SGFGenerationSettings(const QDomElement & element) :
     width(0),
     height(0),
-    color(QColor(0,0,0,0)),
+    // Preview backdrop only (see MainWindow atlas view). Not written into the exported texture.
+    color(QColor(0, 0, 0, 128)),
     padding(2),
     spacing(2)
 {

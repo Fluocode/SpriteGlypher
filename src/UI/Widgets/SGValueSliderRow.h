@@ -52,17 +52,25 @@ private:
     void syncDoubleFromSpin();
     double sliderToDouble(int sliderPos) const;
     int doubleToSlider(double val) const;
+    int sliderToInt(int sliderPos) const;
+    int intToSlider(int val) const;
 
     Mode m_mode = IntMode;
     QSlider *m_slider = nullptr;
     QSpinBox *m_intSpin = nullptr;
     QDoubleSpinBox *m_doubleSpin = nullptr;
 
+    int m_iMin = 0;
+    int m_iMax = 100;
+    int m_iStep = 1;
+    bool m_intNonLinear = false;
+
     double m_dMin = 0.0;
     double m_dMax = 1.0;
     bool m_block = false;
 
     static constexpr int kSliderDoubleSteps = 1000;
+    static constexpr int kSliderIntSteps = 1000;
 };
 
 #endif // SGVALUE_SLIDER_ROW_H

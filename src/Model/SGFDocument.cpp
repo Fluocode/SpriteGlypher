@@ -61,6 +61,8 @@ void SGFApplyEffectFunctor::operator ()(SGFGlyph& glyph)
 
 SGFDocument::SGFDocument(QObject *parent) :
     QObject(parent)
+    , mIsDirty(true)
+    , mHasUnsavedData(false)
 {
 
 }
@@ -167,6 +169,7 @@ void SGFDocument::addEffect(SGFEffect::Ptr effect)
 {
     effect->initialize();
     mEffects.push_back(effect);
+    mIsDirty = true;
 }
 
 
@@ -174,6 +177,18 @@ void SGFDocument::insertEffect(int index, SGFEffect::Ptr effect)
 {
     effect->initialize();
     mEffects.insert(index, effect);
+    mIsDirty = true;
+    mHasUnsavedData = true;
+}
+
+
+void SGFDocument::reorderEffects(const QVector<SGFEffect::Ptr> &effects)
+{
+    if ( effects.size() != mEffects.size() ) {
+        return;
+    }
+    mEffects = effects;
+    mIsDirty = true;
     mHasUnsavedData = true;
 }
 
@@ -181,6 +196,7 @@ void SGFDocument::insertEffect(int index, SGFEffect::Ptr effect)
 void SGFDocument::removeEffect(int index)
 {
     mEffects.removeAt(index);
+    mIsDirty = true;
     mHasUnsavedData = true;
 }
 
@@ -214,6 +230,7 @@ void SGFDocument::scale(float scale)
     {
         effect->scaleEffect(scale);
     }
+    mIsDirty = true;
 }
 
 
@@ -238,6 +255,7 @@ void SGFDocument::generateSpriteFont()
         return;
     }
 
+    mIsDirty = false;
     emit spriteFontUpdated(mSpriteFont);
 }
 
@@ -468,7 +486,9 @@ bool SGFDocument::layoutGlyphs(SGFSpriteFont & spriteFont, const SGFGenerationSe
     if ( doPaint )
     {
         spriteFont.textureAtlas = QImage(atlasSize.width(), atlasSize.height(), QImage::Format_ARGB32);
-        spriteFont.textureAtlas.fill(settings.color);
+        // GenerationSettings::color is preview-only (MainWindow atlas view). Exported atlas is always
+        // cleared transparent; glyph pixels bring their own alpha.
+        spriteFont.textureAtlas.fill(Qt::transparent);
 
         painter.begin(&(spriteFont.textureAtlas));
     }

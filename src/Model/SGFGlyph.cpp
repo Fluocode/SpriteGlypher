@@ -36,6 +36,7 @@ void SGFGlyph::setImportedFromPng(QChar aChar, const QImage &source)
 
     baseSize = img.size();
     effectPadding = SGFPadding(0.f, 0.f, 0.f, 0.f);
+    advancePadding = SGFPadding(0.f, 0.f, 0.f, 0.f);
     minSize = QRect(0, 0, baseSize.width(), baseSize.height());
     mHasPreparedImages = true;
 }
@@ -51,6 +52,7 @@ void SGFGlyph::setCharacter(QFont aFont, QChar aChar)
     QRectF bounds = path.boundingRect();
     baseSize = QSize((int)ceil(bounds.width()), (int)ceil(bounds.height()));
     effectPadding = SGFPadding(0,0,0,0);
+    advancePadding = SGFPadding(0,0,0,0);
 
     image = QImage();
     tempImage = QImage();
@@ -72,6 +74,13 @@ void SGFGlyph::expandSizeForEffect(SGFEffect * effect)
     effectPadding.right = std::max(padding.right, effectPadding.right);
     effectPadding.bottom = std::max(padding.bottom, effectPadding.bottom);
     effectPadding.left = std::max(padding.left, effectPadding.left);
+
+    if ( effect->affectsAdvance() ) {
+        advancePadding.top = std::max(padding.top, advancePadding.top);
+        advancePadding.right = std::max(padding.right, advancePadding.right);
+        advancePadding.bottom = std::max(padding.bottom, advancePadding.bottom);
+        advancePadding.left = std::max(padding.left, advancePadding.left);
+    }
 
     minSize.setWidth(baseSize.width() + effectPadding.left + effectPadding.right);
     minSize.setHeight(baseSize.height() + effectPadding.top + effectPadding.bottom);
