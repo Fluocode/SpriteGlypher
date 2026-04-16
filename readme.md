@@ -69,6 +69,7 @@ If your engine is not listed, check its documentation for **bitmap fonts**, **`.
 
 ---
 
+
 <p align="center">
   <img src="docs/icon.png" alt="Sprite Glypher app icon" width="128" height="128" />
 </p>
