@@ -9,6 +9,7 @@
 #include <QtConcurrent>
 #include <QtXml>
 #include <cmath>
+#include <QFontDatabase>
 
 namespace {
 
@@ -360,14 +361,26 @@ bool SGFDocument::generateGlyphs()
 
     // Variables for the process
     QFont glyphFont;
+    QString resolvedFamily = mInputSettings.fontFamily;
+
+    // Font file mode: load the font into the application at runtime and use its family name.
+    if ( mInputSettings.inputSource == SGFInputSource::FontFile )
+    {
+        const QString loadPath = resolveGlyphImagePath(this, mInputSettings.fontFilePath);
+        const int fontId = QFontDatabase::addApplicationFont(loadPath);
+        const QStringList fams = QFontDatabase::applicationFontFamilies(fontId);
+        if ( !fams.isEmpty() ) {
+            resolvedFamily = fams.first();
+        }
+    }
 
     if ( mInputSettings.fontStyle.isEmpty() )
     {
-        glyphFont = QFont(mInputSettings.fontFamily, mInputSettings.fontSize);
+        glyphFont = QFont(resolvedFamily, mInputSettings.fontSize);
     }
     else
     {
-        glyphFont = mFontDatabase.font(mInputSettings.fontFamily, mInputSettings.fontStyle, mInputSettings.fontSize);
+        glyphFont = mFontDatabase.font(resolvedFamily, mInputSettings.fontStyle, mInputSettings.fontSize);
     }
 
     QVector<QChar> characters = mInputSettings.uniqueCharacters();

@@ -11,6 +11,10 @@ FillEffectSettingsPanel::FillEffectSettingsPanel(QWidget *parent) :
 
     ui->rowOpacity->configureDouble(0.0, 1.0, 2, 0.05);
     ui->rowInset->configureInt(0, 256, 1);
+    ui->rowBevel->configureInt(0, 100, 1);
+    ui->rowBevelIntensity->configureInt(25, 400, 1);
+    ui->rowBevelAngle->configureInt(0, 360, 1);
+    ui->rowBevelBlur->configureInt(0, 64, 1);
 
     // enabled, type, color, gradient
     ui->comboBoxBlend->addItems(SGFEffectTypes::BlendModeOptions());
@@ -23,6 +27,10 @@ FillEffectSettingsPanel::FillEffectSettingsPanel(QWidget *parent) :
     QObject::connect(ui->gradientSwatch, SIGNAL(gradientChanged(SGFGradient)), this, SLOT(subWidgetValueChanged()));
     QObject::connect(ui->patternSwatch, SIGNAL(patternValueChanged(SGFPattern)), this, SLOT(subWidgetValueChanged()));
     QObject::connect(ui->rowInset, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->rowBevel, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->rowBevelIntensity, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->rowBevelAngle, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->rowBevelBlur, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
 }
 
 FillEffectSettingsPanel::~FillEffectSettingsPanel()
@@ -39,6 +47,10 @@ void FillEffectSettingsPanel::setValue(const SGFFillEffectSettings & value)
     ui->comboBoxBlend->setCurrentText(SGFEffectTypes::BlendModeToString(mValue.blendMode));
     ui->rowOpacity->setDoubleValue(mValue.opacity);
     ui->rowInset->setIntValue(mValue.inset);
+    ui->rowBevel->setIntValue(mValue.bevelAmount);
+    ui->rowBevelIntensity->setIntValue(static_cast<int>(mValue.bevelIntensity));
+    ui->rowBevelAngle->setIntValue(static_cast<int>(mValue.bevelAngle));
+    ui->rowBevelBlur->setIntValue(static_cast<int>(mValue.bevelBlur));
     ui->segFillType->setCurrentText(SGFEffectTypes::FillTypeToString(mValue.fillType));
     ui->colorSwatch->setColorValue(mValue.color);
     ui->gradientSwatch->setGradient(mValue.gradient);
@@ -68,6 +80,10 @@ void FillEffectSettingsPanel::subWidgetValueChanged()
     mValue.gradient = ui->gradientSwatch->gradient();
     mValue.pattern = ui->patternSwatch->patternValue();
     mValue.inset = ui->rowInset->intValue();
+    mValue.bevelAmount = ui->rowBevel->intValue();
+    mValue.bevelIntensity = static_cast<float>(ui->rowBevelIntensity->intValue());
+    mValue.bevelAngle = static_cast<float>(ui->rowBevelAngle->intValue());
+    mValue.bevelBlur = static_cast<float>(ui->rowBevelBlur->intValue());
 
     emit valueChanged(mValue);
 

@@ -135,8 +135,10 @@ bool SGFFontBMFontExport::buildExportData(SGFDocument *doc, SGFBMFontExportData 
             // left “indent” when centering text in Starling / BMFont consumers.)
             entry.xoffset = static_cast<int>(std::lround(
                 static_cast<double>(ink.x()) - static_cast<double>(glyph.effectPadding.left)));
+            // Shadows/glows expand the bitmap but must NOT shift baseline. Use advancePadding (excludes shadows)
+            // so typographic Y stays stable while the texture can still include shadow pixels.
             entry.yoffset = static_cast<int>(fontMetrics.height() + ink.y() - fontMetrics.descent()
-                - glyph.effectPadding.bottom);
+                - glyph.advancePadding.bottom);
             const int hfAdv = static_cast<int>(fontMetrics.horizontalAdvance(glyph.character));
             // Advance should ensure effects don't overlap, but should NOT include left padding/bearing.
             // Compute the visual right edge from the font ink box + *right* effect padding:

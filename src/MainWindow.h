@@ -67,6 +67,9 @@ private:
     /** Simply returns the index of the effect currently selected in the UI. */
     int selectedEffectIndex();
 
+    /** Select an effect by document index (syncs list + stacked panel). */
+    void selectDocumentEffectIndex(int docIndex);
+
     /** Returns a brush which is used to fill the background area of the atlas graphics view. */
     QBrush atlasBackgroundBrush();
 

@@ -8,6 +8,7 @@
 enum class SGFInputSource
 {
     SystemFont,
+    FontFile,
     PngSprites
 };
 
@@ -31,6 +32,7 @@ private:
     static const QString kFontSizeKey;
     static const QString kCharactersKey;
     static const QString kInputSourceKey;
+    static const QString kFontFilePathKey;
     static const QString kPngFaceNameKey;
     static const QString kPngSlotKey;
     static const QString kPngSlotCharKey;
@@ -48,6 +50,9 @@ public:
 
 public:
     SGFInputSource inputSource = SGFInputSource::SystemFont;
+
+    /** Local font file path (TTF/OTF) when using FontFile inputSource. */
+    QString fontFilePath;
 
     /** BMFont `face` when using PNG sprites. */
     QString pngFontFaceName;

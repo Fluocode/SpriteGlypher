@@ -2,6 +2,7 @@
 
 #include <QBuffer>
 #include <QtMath>
+#include <algorithm>
 
 const QString SGFSparkleOverlayEffect::kPatternElementKey = QString("SparklePattern");
 const QString SGFSparkleOverlayEffect::kPatternScaleKey = QString("scale");
@@ -11,6 +12,70 @@ const QString SGFSparkleOverlayEffect::kScaleKey = QString("sparkleScale");
 const QString SGFSparkleOverlayEffect::kRotationKey = QString("sparkleRotation");
 const QString SGFSparkleOverlayEffect::kOffsetXKey = QString("sparkleOffsetX");
 const QString SGFSparkleOverlayEffect::kOffsetYKey = QString("sparkleOffsetY");
+const QString SGFSparkleOverlayEffect::kEdgeBleedKey = QString("edgeBleed");
+
+namespace {
+
+/** Expand opaque/ink regions in the alpha channel so overlays can extend past a hard glyph edge. */
+QImage dilateAlpha(const QImage &src, int radius)
+{
+    if ( radius <= 0 || src.isNull() ) {
+        return src;
+    }
+
+    QImage img = src.convertToFormat(QImage::Format_ARGB32);
+    const int w = img.width();
+    const int h = img.height();
+
+    QVector<quint32> buf(w * h);
+    QVector<quint32> tmp(w * h);
+
+    for ( int y = 0; y < h; ++y ) {
+        for ( int x = 0; x < w; ++x ) {
+            buf[y * w + x] = static_cast<quint32>(qAlpha(img.pixel(x, y)));
+        }
+    }
+
+    auto horizPass = [&](const QVector<quint32> &in, QVector<quint32> &out) {
+        for ( int y = 0; y < h; ++y ) {
+            for ( int x = 0; x < w; ++x ) {
+                quint32 best = 0;
+                for ( int dx = -radius; dx <= radius; ++dx ) {
+                    const int sx = qBound(0, x + dx, w - 1);
+                    best = std::max(best, in[y * w + sx]);
+                }
+                out[y * w + x] = best;
+            }
+        }
+    };
+
+    auto vertPass = [&](const QVector<quint32> &in, QVector<quint32> &out) {
+        for ( int y = 0; y < h; ++y ) {
+            for ( int x = 0; x < w; ++x ) {
+                quint32 best = 0;
+                for ( int dy = -radius; dy <= radius; ++dy ) {
+                    const int sy = qBound(0, y + dy, h - 1);
+                    best = std::max(best, in[sy * w + x]);
+                }
+                out[y * w + x] = best;
+            }
+        }
+    };
+
+    horizPass(buf, tmp);
+    vertPass(tmp, buf);
+
+    QImage outImg(w, h, QImage::Format_ARGB32);
+    for ( int y = 0; y < h; ++y ) {
+        for ( int x = 0; x < w; ++x ) {
+            const int a = static_cast<int>(buf[y * w + x]);
+            outImg.setPixel(x, y, qRgba(255, 255, 255, qBound(0, a, 255)));
+        }
+    }
+    return outImg;
+}
+
+}
 
 SGFSparkleOverlayEffect::SGFSparkleOverlayEffect()
 {
@@ -22,6 +87,7 @@ void SGFSparkleOverlayEffect::scaleEffect(float factor)
     SGFSparkleOverlayEffectSettings s = getSettings();
     s.offsetX *= factor;
     s.offsetY *= factor;
+    s.edgeBleed *= factor;
     setSettings(s);
 }
 
@@ -62,9 +128,12 @@ void SGFSparkleOverlayEffect::applyToGlyph(SGFGlyph& glyph)
         QPainter p(&overlay);
         p.setRenderHint(QPainter::Antialiasing);
         p.fillRect(overlay.rect(), br);
-        // Mask inside glyph only.
+        // Clip to glyph silhouette; dilate mask slightly so pattern features near the ink edge
+        // are not harshly cut (sparkles can "float" a few px past the fill boundary).
         p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        p.drawImage(0, 0, glyph.maskImage);
+        const int bleed = static_cast<int>(std::round(std::max(0.0f, s.edgeBleed)));
+        const QImage clipMask = dilateAlpha(glyph.maskImage, qBound(0, bleed, 48));
+        p.drawImage(0, 0, clipMask);
         p.end();
     }
 
@@ -82,6 +151,7 @@ void SGFSparkleOverlayEffect::setDefaultParameters()
     SGFSparkleOverlayEffectSettings s;
     s.blendMode = SGFBlendMode::Blend_Overlay;
     s.scale = 0.10f;
+    s.edgeBleed = 0.0f;
     QImage img(QStringLiteral(":/sparks.png"));
     if ( !img.isNull() ) {
         s.pattern.image = img;
@@ -101,6 +171,7 @@ SGFSparkleOverlayEffectSettings SGFSparkleOverlayEffect::getSettings()
     s.rotation = mParameters[kRotationKey].value<float>();
     s.offsetX = mParameters[kOffsetXKey].value<float>();
     s.offsetY = mParameters[kOffsetYKey].value<float>();
+    s.edgeBleed = mParameters.value(kEdgeBleedKey, QVariant::fromValue(0.0f)).value<float>();
     return s;
 }
 
@@ -114,6 +185,7 @@ void SGFSparkleOverlayEffect::setSettings(SGFSparkleOverlayEffectSettings settin
     mParameters[kRotationKey] = QVariant::fromValue<float>(settings.rotation);
     mParameters[kOffsetXKey] = QVariant::fromValue<float>(settings.offsetX);
     mParameters[kOffsetYKey] = QVariant::fromValue<float>(settings.offsetY);
+    mParameters[kEdgeBleedKey] = QVariant::fromValue<float>(settings.edgeBleed);
 }
 
 bool SGFSparkleOverlayEffect::writeSubclassToXmlStream(QXmlStreamWriter &writer)
@@ -124,6 +196,7 @@ bool SGFSparkleOverlayEffect::writeSubclassToXmlStream(QXmlStreamWriter &writer)
     writer.writeAttribute(kRotationKey, QString::number(s.rotation));
     writer.writeAttribute(kOffsetXKey, QString::number(s.offsetX));
     writer.writeAttribute(kOffsetYKey, QString::number(s.offsetY));
+    writer.writeAttribute(kEdgeBleedKey, QString::number(s.edgeBleed));
 
     if ( !s.pattern.image.isNull() )
     {
@@ -150,12 +223,14 @@ void SGFSparkleOverlayEffect::readSubclassFromXmlNode(const QDomElement &element
     const QString xmlRotation = element.attribute(kRotationKey);
     const QString xmlOffX = element.attribute(kOffsetXKey);
     const QString xmlOffY = element.attribute(kOffsetYKey);
+    const QString xmlBleed = element.attribute(kEdgeBleedKey);
 
     if ( !xmlOpacity.isEmpty() ) { s.opacity = xmlOpacity.toFloat(); }
     if ( !xmlScale.isEmpty() ) { s.scale = xmlScale.toFloat(); }
     if ( !xmlRotation.isEmpty() ) { s.rotation = xmlRotation.toFloat(); }
     if ( !xmlOffX.isEmpty() ) { s.offsetX = xmlOffX.toFloat(); }
     if ( !xmlOffY.isEmpty() ) { s.offsetY = xmlOffY.toFloat(); }
+    if ( !xmlBleed.isEmpty() ) { s.edgeBleed = xmlBleed.toFloat(); }
 
     QDomElement patNode = element.firstChildElement(kPatternElementKey);
     if ( !patNode.isNull() )

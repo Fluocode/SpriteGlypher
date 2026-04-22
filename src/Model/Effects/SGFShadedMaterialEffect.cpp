@@ -3,8 +3,10 @@
 #include <QFileInfo>
 #include <QPainter>
 #include <QPoint>
-#include <QQueue>
 #include <cmath>
+#include <limits>
+#include <queue>
+#include <utility>
 
 const QString SGFShadedMaterialEffect::kLightAngleKey = QStringLiteral("shadedLightAngle");
 const QString SGFShadedMaterialEffect::kLightElevationKey = QStringLiteral("shadedLightElevation");
@@ -228,10 +230,6 @@ void SGFShadedMaterialEffect::applyInflateHeight(QVector<float>& hmap, int w, in
         }
     }
 
-    const int INF = w + h + 64;
-    QVector<int> dist(wh, INF);
-    QQueue<QPoint> queue;
-
     auto isBoundary = [&]( int x, int y ) -> bool {
         const int idx = y * w + x;
         if ( !isFg[idx] ) {
@@ -244,6 +242,13 @@ void SGFShadedMaterialEffect::applyInflateHeight(QVector<float>& hmap, int w, in
             || !isFg[idx - w - 1] || !isFg[idx - w + 1] || !isFg[idx + w - 1] || !isFg[idx + w + 1];
     };
 
+    // Euclidean-ish distance to boundary on an 8-grid: axis step 1, diagonal step √2.
+    // Uniform BFS (+1 on diagonals) approximates chessboard distance → pyramidal / X-shaped ridges.
+    const float INF = std::numeric_limits<float>::infinity();
+    QVector<float> dist(wh, INF);
+    using DistNode = std::pair<float, int>;
+    std::priority_queue<DistNode, std::vector<DistNode>, std::greater<DistNode>> pq;
+
     for ( int y = 0; y < h; ++y ) {
         for ( int x = 0; x < w; ++x ) {
             const int idx = y * w + x;
@@ -251,23 +256,32 @@ void SGFShadedMaterialEffect::applyInflateHeight(QVector<float>& hmap, int w, in
                 continue;
             }
             if ( isBoundary(x, y) ) {
-                dist[idx] = 0;
-                queue.enqueue(QPoint(x, y));
+                dist[idx] = 0.f;
+                pq.push(DistNode(0.f, idx));
             }
         }
     }
 
-    // 8-neighbour (uniform step-1): thicker “core” and higher maxDist on diagonal strokes.
     const int dx[8] = { -1, 1, 0, 0, -1, -1, 1, 1 };
     const int dy[8] = { 0, 0, -1, 1, -1, 1, -1, 1 };
+    const float step[8] = {
+        1.f, 1.f, 1.f, 1.f,
+        1.41421356237f, 1.41421356237f, 1.41421356237f, 1.41421356237f
+    };
 
-    while ( !queue.isEmpty() ) {
-        const QPoint p = queue.dequeue();
-        const int idx = p.y() * w + p.x();
-        const int d = dist[idx];
+    while ( !pq.empty() ) {
+        const DistNode top = pq.top();
+        pq.pop();
+        const float d = top.first;
+        const int idx = top.second;
+        if ( d > dist[idx] + 1e-5f ) {
+            continue;
+        }
+        const int x = idx % w;
+        const int y = idx / w;
         for ( int k = 0; k < 8; ++k ) {
-            const int nx = p.x() + dx[k];
-            const int ny = p.y() + dy[k];
+            const int nx = x + dx[k];
+            const int ny = y + dy[k];
             if ( nx < 0 || nx >= w || ny < 0 || ny >= h ) {
                 continue;
             }
@@ -275,17 +289,28 @@ void SGFShadedMaterialEffect::applyInflateHeight(QVector<float>& hmap, int w, in
             if ( !isFg[nidx] ) {
                 continue;
             }
-            if ( dist[nidx] > d + 1 ) {
-                dist[nidx] = d + 1;
-                queue.enqueue(QPoint(nx, ny));
+            const float nd = d + step[k];
+            if ( nd < dist[nidx] ) {
+                dist[nidx] = nd;
+                pq.push(DistNode(nd, nidx));
             }
         }
     }
 
-    int maxDist = 0;
+    // Blur the distance field so the medial-axis ridge (and DT grid bias) does not become a sharp cone / facets.
+    QVector<float> dsmooth(wh, 0.f);
     for ( int i = 0; i < wh; ++i ) {
-        if ( isFg[i] && dist[i] < INF ) {
-            maxDist = qMax(maxDist, dist[i]);
+        if ( isFg[i] && std::isfinite(dist[i]) ) {
+            dsmooth[i] = dist[i];
+        }
+    }
+    const int distBlurR = qBound(1, (w + h) / 40, 4);
+    blurHeightMap(dsmooth, w, h, distBlurR);
+
+    float maxDist = 0.f;
+    for ( int i = 0; i < wh; ++i ) {
+        if ( isFg[i] ) {
+            maxDist = qMax(maxDist, dsmooth[i]);
         }
     }
 
@@ -297,11 +322,13 @@ void SGFShadedMaterialEffect::applyInflateHeight(QVector<float>& hmap, int w, in
                 continue;
             }
             float m = 1.f;
-            if ( maxDist > 0 && isFg[idx] && dist[idx] < INF ) {
-                const float f = qBound(0.f, static_cast<float>(dist[idx]) / static_cast<float>(maxDist), 1.f);
-                // Quarter sine: smooth dome from edge (0) toward interior — less “needle” at skeleton junctions than steep pow().
-                const float dome01 = std::sin(f * 1.57079633f); // sin(f * π/2), 0→0, 1→1
-                const float balloon = 0.05f + 0.95f * dome01;
+            if ( maxDist > 1e-6f && isFg[idx] ) {
+                float f = qBound(0.f, dsmooth[idx] / maxDist, 1.f);
+                // Ease: reduces harsh bands from quantized distance.
+                f = f * f * (3.f - 2.f * f);
+                // Hemispherical cap sqrt(1-(1-f)²): zero slope at the top (f→1) → much less “pyramid” than sin(πf/2) on a spike field.
+                const float hem = std::sqrt(qMax(0.f, f * (2.f - f)));
+                const float balloon = 0.06f + 0.94f * hem;
                 m = (1.f - strength) + balloon * strength;
             }
             hmap[idx] *= m;
@@ -374,8 +401,9 @@ void SGFShadedMaterialEffect::applyToGlyph(SGFGlyph& glyph)
     // Inflate before bbox dome so medial-axis ridge survives global dome shaping.
     applyInflateHeight(hmap, w, h, heightSource, settings.inflateAmount);
     if ( settings.inflateAmount > 0.02f ) {
-        // Soften DT ridge spikes (stroke intersections) before interior dome / normals.
-        blurHeightMap(hmap, w, h, 1);
+        // Extra smoothing before dome + normal sampling (reduces faceted lighting).
+        const int postInflate = qBound(2, settings.smoothRadius + 2, 6);
+        blurHeightMap(hmap, w, h, postInflate);
     }
     applyInteriorDomeHeight(hmap, w, h, heightSource, settings.interiorRelief);
 

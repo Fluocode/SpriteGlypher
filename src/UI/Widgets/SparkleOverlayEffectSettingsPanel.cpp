@@ -1,6 +1,8 @@
 #include "SparkleOverlayEffectSettingsPanel.h"
 #include "ui_SparkleOverlayEffectSettingsPanel.h"
 
+#include <cmath>
+
 SparkleOverlayEffectSettingsPanel::SparkleOverlayEffectSettingsPanel(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::SparkleOverlayEffectSettingsPanel)
@@ -12,6 +14,7 @@ SparkleOverlayEffectSettingsPanel::SparkleOverlayEffectSettingsPanel(QWidget *pa
     ui->rowRotation->configureInt(0, 360, 1); // keep linear (angle-like)
     ui->rowOffsetX->configureInt(-512, 512, 1);
     ui->rowOffsetY->configureInt(-512, 512, 1);
+    ui->rowEdgeBleed->configureInt(0, 48, 1);
 
     ui->comboBoxBlend->addItems(SGFEffectTypes::BlendModeOptions());
 
@@ -22,6 +25,7 @@ SparkleOverlayEffectSettingsPanel::SparkleOverlayEffectSettingsPanel(QWidget *pa
     QObject::connect(ui->rowRotation, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
     QObject::connect(ui->rowOffsetX, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
     QObject::connect(ui->rowOffsetY, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->rowEdgeBleed, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
 }
 
 SparkleOverlayEffectSettingsPanel::~SparkleOverlayEffectSettingsPanel()
@@ -40,6 +44,7 @@ void SparkleOverlayEffectSettingsPanel::setValue(const SGFSparkleOverlayEffectSe
     ui->rowRotation->setIntValue(static_cast<int>(mValue.rotation));
     ui->rowOffsetX->setIntValue(static_cast<int>(mValue.offsetX));
     ui->rowOffsetY->setIntValue(static_cast<int>(mValue.offsetY));
+    ui->rowEdgeBleed->setIntValue(static_cast<int>(std::lround(mValue.edgeBleed)));
     mIsUpdatingGui = false;
 }
 
@@ -61,6 +66,7 @@ void SparkleOverlayEffectSettingsPanel::subWidgetValueChanged()
     mValue.rotation = static_cast<float>(ui->rowRotation->intValue());
     mValue.offsetX = static_cast<float>(ui->rowOffsetX->intValue());
     mValue.offsetY = static_cast<float>(ui->rowOffsetY->intValue());
+    mValue.edgeBleed = static_cast<float>(ui->rowEdgeBleed->intValue());
 
     emit valueChanged(mValue);
 }

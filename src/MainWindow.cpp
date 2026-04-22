@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QCheckBox>
+#include <QAbstractItemView>
 #include <cmath>
 
 #include "Model/Exporters/SGFFontExporters.h"
@@ -19,7 +20,7 @@
 #include "UI/Widgets/EffectListRow.h"
 
 static const char * APP_TITLE = "Sprite Glypher";
-static const char * APP_VERSION = "1.0.3";
+static const char * APP_VERSION = "1.0.5";
 
 #if defined(Q_OS_MAC)
     static const char * APP_PLATFORM = "OSX";
@@ -573,6 +574,23 @@ int MainWindow::selectedEffectIndex()
 }
 
 
+void MainWindow::selectDocumentEffectIndex(int docIndex)
+{
+    const int n = mDocument->getEffectCount();
+    if ( n <= 0 || docIndex < 0 || docIndex >= n ) {
+        return;
+    }
+    // List is built with document indices reversed (row 0 = last effect / top layer).
+    const int row = n - 1 - docIndex;
+    // Clear first so selecting the same row again still updates the stacked panel (e.g. duplicate).
+    ui->listWidgetEffects->setCurrentRow(-1);
+    ui->listWidgetEffects->setCurrentRow(row);
+    if ( QListWidgetItem * item = ui->listWidgetEffects->item(row) ) {
+        ui->listWidgetEffects->scrollToItem(item, QAbstractItemView::PositionAtCenter);
+    }
+}
+
+
 QBrush MainWindow::atlasBackgroundBrush()
 {
     const int cell = 17;
@@ -699,48 +717,56 @@ void MainWindow::on_actionAdd_Fill_triggered()
 {
     mDocument->addEffect(SGFEffect::Ptr(new SGFFillEffect()));
     recreateGuiFromDocument();
+    selectDocumentEffectIndex(mDocument->getEffectCount() - 1);
 }
 
 void MainWindow::on_actionAdd_Shadow_triggered()
 {
     mDocument->addEffect(SGFEffect::Ptr(new SGFShadowEffect()));
     recreateGuiFromDocument();
+    selectDocumentEffectIndex(mDocument->getEffectCount() - 1);
 }
 
 void MainWindow::on_actionAdd_Underlay_triggered()
 {
     mDocument->addEffect(SGFEffect::Ptr(new SGFUnderlayEffect()));
     recreateGuiFromDocument();
+    selectDocumentEffectIndex(mDocument->getEffectCount() - 1);
 }
 
 void MainWindow::on_actionAdd_Outer_Glow_triggered()
 {
     mDocument->addEffect(SGFEffect::Ptr(new SGFOuterGlowEffect()));
     recreateGuiFromDocument();
+    selectDocumentEffectIndex(mDocument->getEffectCount() - 1);
 }
 
 void MainWindow::on_actionAdd_Inner_Highlight_triggered()
 {
     mDocument->addEffect(SGFEffect::Ptr(new SGFInnerHighlightEffect()));
     recreateGuiFromDocument();
+    selectDocumentEffectIndex(mDocument->getEffectCount() - 1);
 }
 
 void MainWindow::on_actionAdd_Sparkle_Overlay_triggered()
 {
     mDocument->addEffect(SGFEffect::Ptr(new SGFSparkleOverlayEffect()));
     recreateGuiFromDocument();
+    selectDocumentEffectIndex(mDocument->getEffectCount() - 1);
 }
 
 void MainWindow::on_actionAdd_Stroke_triggered()
 {
     mDocument->addEffect(SGFEffect::Ptr(new SGFStrokeEffect()));
     recreateGuiFromDocument();
+    selectDocumentEffectIndex(mDocument->getEffectCount() - 1);
 }
 
 void MainWindow::on_actionAdd_Shaded_Material_triggered()
 {
     mDocument->addEffect(SGFEffect::Ptr(new SGFShadedMaterialEffect()));
     recreateGuiFromDocument();
+    selectDocumentEffectIndex(mDocument->getEffectCount() - 1);
 }
 
 void MainWindow::on_actionDelete_Selected_Effect_triggered()
@@ -779,8 +805,9 @@ void MainWindow::on_actionDuplicate_Selected_Effect_triggered()
 
     SGFEffect::Ptr effect = mDocument->getEffectAtIndex(effectIndex);
     SGFEffect::Ptr effectCopy = effect->clone();
-    mDocument->insertEffect(effectIndex+1, effectCopy);
+    mDocument->insertEffect(effectIndex + 1, effectCopy);
     recreateGuiFromDocument();
+    selectDocumentEffectIndex(effectIndex + 1);
 }
 
 void MainWindow::on_actionExport_triggered()

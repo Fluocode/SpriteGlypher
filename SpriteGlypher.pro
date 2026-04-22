@@ -101,6 +101,7 @@ HEADERS += \
     src/Model/Effects/SGFStrokeEffect.h \
     src/Model/Effects/SGFShadowEffect.h \
     src/Model/Effects/SGFUnderlayEffect.h \
+    src/Model/Effects/SGFInnerBevel.h \
     src/Model/Effects/SGFOuterGlowEffect.h \
     src/Model/Effects/SGFInnerHighlightEffect.h \
     src/Model/Effects/SGFSparkleOverlayEffect.h \
@@ -155,6 +156,7 @@ SOURCES += \
     src/Model/Effects/SGFStrokeEffect.cpp \
     src/Model/Effects/SGFShadowEffect.cpp \
     src/Model/Effects/SGFUnderlayEffect.cpp \
+    src/Model/Effects/SGFInnerBevel.cpp \
     src/Model/Effects/SGFOuterGlowEffect.cpp \
     src/Model/Effects/SGFInnerHighlightEffect.cpp \
     src/Model/Effects/SGFSparkleOverlayEffect.cpp \

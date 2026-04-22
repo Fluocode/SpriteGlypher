@@ -1,4 +1,5 @@
 #include "SGFFillEffect.h"
+#include "SGFInnerBevel.h"
 
 #include <cmath>
 
@@ -10,6 +11,10 @@ const QString SGFFillEffect::kGradientKey = QString("fillGradient");
 const QString SGFFillEffect::kPatternKey = QString("fillPattern");
 const QString SGFFillEffect::kPatternScaleKey = QString("scale");
 const QString SGFFillEffect::kInsetKey = QString("fillInset");
+const QString SGFFillEffect::kBevelAmountKey = QString("fillBevelAmount");
+const QString SGFFillEffect::kBevelAngleKey = QString("fillBevelAngle");
+const QString SGFFillEffect::kBevelBlurKey = QString("fillBevelBlur");
+const QString SGFFillEffect::kBevelIntensityKey = QString("fillBevelIntensity");
 
 
 SGFFillEffect::SGFFillEffect()
@@ -21,7 +26,8 @@ SGFFillEffect::SGFFillEffect()
 void SGFFillEffect::scaleEffect(float factor)
 {
     SGFFillEffectSettings settings = getSettings();
-    settings.inset *= factor;
+    settings.inset = static_cast<int>(std::round(static_cast<float>(settings.inset) * factor));
+    settings.bevelBlur *= factor;
     setSettings(settings);
 }
 
@@ -62,6 +68,17 @@ void SGFFillEffect::applyToGlyph(SGFGlyph& glyph)
     }
 
     painter.end();
+
+    if ( settings.bevelAmount > 0 ) {
+        SGFInnerBevel::applyToImage(
+            glyph.image,
+            path,
+            static_cast<float>(settings.bevelAmount),
+            settings.bevelAngle,
+            settings.bevelBlur,
+            settings.opacity,
+            settings.bevelIntensity);
+    }
 }
 
 
@@ -114,6 +131,10 @@ SGFFillEffectSettings SGFFillEffect::getSettings()
     settings.gradient = mParameters[kGradientKey].value<SGFGradient>();
     settings.pattern = mParameters[kPatternKey].value<SGFPattern>();
     settings.inset = mParameters[kInsetKey].toInt();
+    settings.bevelAmount = mParameters.value(kBevelAmountKey, 0).toInt();
+    settings.bevelAngle = mParameters.value(kBevelAngleKey, 135.0f).toFloat();
+    settings.bevelBlur = mParameters.value(kBevelBlurKey, 0.0f).toFloat();
+    settings.bevelIntensity = mParameters.value(kBevelIntensityKey, 100.0f).toFloat();
 
     return settings;
 }
@@ -127,6 +148,10 @@ bool SGFFillEffect::writeSubclassToXmlStream(QXmlStreamWriter &writer)
     writer.writeAttribute(kColorKey, settings.color.name(QColor::HexArgb));
     writer.writeAttribute(kGradientKey, settings.gradient.stringRepresentation());
     writer.writeAttribute(kInsetKey, QString::number(settings.inset));
+    writer.writeAttribute(kBevelAmountKey, QString::number(settings.bevelAmount));
+    writer.writeAttribute(kBevelAngleKey, QString::number(settings.bevelAngle));
+    writer.writeAttribute(kBevelBlurKey, QString::number(settings.bevelBlur));
+    writer.writeAttribute(kBevelIntensityKey, QString::number(settings.bevelIntensity));
 
     if ( settings.fillType == Fill_Pattern )
     {
@@ -153,11 +178,19 @@ void SGFFillEffect::readSubclassFromXmlNode(const QDomElement &element)
     QString xmlColor = element.attribute(kColorKey);
     QString xmlGradient = element.attribute(kGradientKey);
     QString xmlInset = element.attribute(kInsetKey);
+    const QString xmlBevelAmount = element.attribute(kBevelAmountKey);
+    const QString xmlBevelAngle = element.attribute(kBevelAngleKey);
+    const QString xmlBevelBlur = element.attribute(kBevelBlurKey);
+    const QString xmlBevelIntensity = element.attribute(kBevelIntensityKey);
 
     if ( !xmlFillType.isEmpty() )   { settings.fillType = SGFEffectTypes::FillTypeFromString(xmlFillType); }
     if ( !xmlColor.isEmpty() )      { settings.color = QColor(xmlColor); }
     if ( !xmlGradient.isEmpty() )   { settings.gradient = SGFGradient(xmlGradient); }
     if ( !xmlInset.isEmpty() )      { settings.inset = xmlInset.toInt(); }
+    if ( !xmlBevelAmount.isEmpty() ) { settings.bevelAmount = xmlBevelAmount.toInt(); }
+    if ( !xmlBevelAngle.isEmpty() ) { settings.bevelAngle = xmlBevelAngle.toFloat(); }
+    if ( !xmlBevelBlur.isEmpty() ) { settings.bevelBlur = xmlBevelBlur.toFloat(); }
+    if ( !xmlBevelIntensity.isEmpty() ) { settings.bevelIntensity = xmlBevelIntensity.toFloat(); }
 
     QDomElement patternNode = element.firstChildElement(kPatternElementKey);
 
@@ -193,5 +226,9 @@ void SGFFillEffect::setSettings(SGFFillEffectSettings settings)
     mParameters[kGradientKey] = QVariant::fromValue<SGFGradient>(settings.gradient);
     mParameters[kPatternKey] = QVariant::fromValue<SGFPattern>(settings.pattern);
     mParameters[kInsetKey] = QVariant::fromValue<int>(settings.inset);
+    mParameters[kBevelAmountKey] = QVariant::fromValue<int>(settings.bevelAmount);
+    mParameters[kBevelAngleKey] = QVariant::fromValue<float>(settings.bevelAngle);
+    mParameters[kBevelBlurKey] = QVariant::fromValue<float>(settings.bevelBlur);
+    mParameters[kBevelIntensityKey] = QVariant::fromValue<float>(settings.bevelIntensity);
 }
 

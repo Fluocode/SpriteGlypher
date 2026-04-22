@@ -15,6 +15,99 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QButtonGroup>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QFileInfo>
+#include <QMimeData>
+#include <QFrame>
+#include <functional>
+
+namespace {
+
+class FontDropArea : public QFrame
+{
+public:
+    std::function<void(const QString &path)> onFileDropped;
+
+    explicit FontDropArea(QWidget *parent = nullptr) : QFrame(parent)
+    {
+        setAcceptDrops(true);
+        setFixedHeight(90);
+        setFrameShape(QFrame::StyledPanel);
+        setFrameShadow(QFrame::Sunken);
+        setStyleSheet(QStringLiteral(
+            "QFrame {"
+            "  border: 1px dashed rgba(220,220,230,110);"
+            "  border-radius: 10px;"
+            "  background: rgba(255,255,255,6);"
+            "}"
+            "QFrame[dragOver=\"true\"] {"
+            "  border: 1px dashed rgba(255,255,255,210);"
+            "  background: rgba(90,120,200,40);"
+            "}"));
+
+        auto *l = new QVBoxLayout(this);
+        l->setContentsMargins(10, 10, 10, 10);
+        l->setSpacing(4);
+        auto *t = new QLabel(tr("Drag & drop a .ttf / .otf font file here"), this);
+        t->setWordWrap(true);
+        t->setAlignment(Qt::AlignCenter);
+        t->setStyleSheet(QStringLiteral("QLabel { color: rgba(220,220,230,180); }"));
+        l->addWidget(t);
+    }
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *e) override
+    {
+        if ( e->mimeData() && e->mimeData()->hasUrls() ) {
+            const QList<QUrl> urls = e->mimeData()->urls();
+            if ( !urls.isEmpty() ) {
+                const QString p = urls.first().toLocalFile();
+                const QString ext = QFileInfo(p).suffix().toLower();
+                if ( ext == QStringLiteral("ttf") || ext == QStringLiteral("otf") || ext == QStringLiteral("ttc") ) {
+                    setProperty("dragOver", true);
+                    style()->unpolish(this);
+                    style()->polish(this);
+                    e->acceptProposedAction();
+                    return;
+                }
+            }
+        }
+        e->ignore();
+    }
+
+    void dragLeaveEvent(QDragLeaveEvent *e) override
+    {
+        Q_UNUSED(e);
+        setProperty("dragOver", false);
+        style()->unpolish(this);
+        style()->polish(this);
+    }
+
+    void dropEvent(QDropEvent *e) override
+    {
+        setProperty("dragOver", false);
+        style()->unpolish(this);
+        style()->polish(this);
+
+        if ( e->mimeData() && e->mimeData()->hasUrls() ) {
+            const QList<QUrl> urls = e->mimeData()->urls();
+            if ( !urls.isEmpty() ) {
+                const QString p = urls.first().toLocalFile();
+                if ( !p.isEmpty() ) {
+                    if ( onFileDropped ) {
+                        onFileDropped(p);
+                    }
+                    e->acceptProposedAction();
+                    return;
+                }
+            }
+        }
+        e->ignore();
+    }
+};
+
+}
 
 InputSettingsPanel::InputSettingsPanel(QWidget *parent) :
     QWidget(parent),
@@ -39,8 +132,9 @@ InputSettingsPanel::InputSettingsPanel(QWidget *parent) :
     seg->setSpacing(0);
 
     m_btnSystemFont = new QToolButton(segRow);
+    m_btnFontFile = new QToolButton(segRow);
     m_btnPng = new QToolButton(segRow);
-    for ( QToolButton *b : {m_btnSystemFont, m_btnPng} ) {
+    for ( QToolButton *b : {m_btnSystemFont, m_btnFontFile, m_btnPng} ) {
         b->setFont(compactFont);
         b->setCheckable(true);
         b->setAutoRaise(false);
@@ -48,12 +142,14 @@ InputSettingsPanel::InputSettingsPanel(QWidget *parent) :
         b->setMinimumHeight(28);
     }
     m_btnSystemFont->setText(tr("System font"));
+    m_btnFontFile->setText(tr("Font file"));
     m_btnPng->setText(tr("PNG images"));
 
     // Exclusive selection (segmented control)
     auto *bg = new QButtonGroup(segRow);
     bg->setExclusive(true);
     bg->addButton(m_btnSystemFont);
+    bg->addButton(m_btnFontFile);
     bg->addButton(m_btnPng);
     m_btnSystemFont->setChecked(true);
 
@@ -71,14 +167,29 @@ InputSettingsPanel::InputSettingsPanel(QWidget *parent) :
         "}"
         "QToolButton:hover:!checked { background: #383840; }"
         "QToolButton#sgSegLeft { border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-right: 0px; }"
+        "QToolButton#sgSegMid { border-right: 0px; }"
         "QToolButton#sgSegRight { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }"
     ));
     m_btnSystemFont->setObjectName(QStringLiteral("sgSegLeft"));
+    m_btnFontFile->setObjectName(QStringLiteral("sgSegMid"));
     m_btnPng->setObjectName(QStringLiteral("sgSegRight"));
 
     seg->addWidget(m_btnSystemFont);
+    seg->addWidget(m_btnFontFile);
     seg->addWidget(m_btnPng);
     gv->addWidget(segRow);
+
+    m_fontFileWidget = new QWidget(this);
+    m_fontFileWidget->setFont(compactFont);
+    auto *fv = new QVBoxLayout(m_fontFileWidget);
+    fv->setContentsMargins(0, 0, 0, 0);
+    fv->setSpacing(6);
+    m_fontFileNameLabel = new QLabel(tr("Font: (drop a file below)"), m_fontFileWidget);
+    m_fontFileNameLabel->setWordWrap(true);
+    fv->addWidget(m_fontFileNameLabel);
+    m_fontFileDropArea = new FontDropArea(m_fontFileWidget);
+    static_cast<FontDropArea *>(m_fontFileDropArea)->onFileDropped = [this](const QString &p) { onFontFileDropped(p); };
+    fv->addWidget(m_fontFileDropArea);
 
     m_pngWidget = new QWidget(this);
     m_pngWidget->setFont(compactFont);
@@ -126,9 +237,11 @@ InputSettingsPanel::InputSettingsPanel(QWidget *parent) :
     pv->addLayout(pg);
 
     ui->verticalLayout->insertWidget(0, m_sourceGroup);
-    ui->verticalLayout->insertWidget(1, m_pngWidget);
+    ui->verticalLayout->insertWidget(1, m_fontFileWidget);
+    ui->verticalLayout->insertWidget(2, m_pngWidget);
 
     QObject::connect(m_btnPng, &QToolButton::toggled, this, &InputSettingsPanel::onPngModeToggled);
+    QObject::connect(m_btnFontFile, &QToolButton::toggled, this, &InputSettingsPanel::onFontFileModeToggled);
     QObject::connect(m_pngFaceEdit, &QLineEdit::textEdited, this, &InputSettingsPanel::onPngFaceEdited);
     QObject::connect(m_pngAdd, &QPushButton::clicked, this, &InputSettingsPanel::onPngAddRow);
     QObject::connect(m_pngRemove, &QPushButton::clicked, this, &InputSettingsPanel::onPngRemoveRow);
@@ -139,6 +252,7 @@ InputSettingsPanel::InputSettingsPanel(QWidget *parent) :
     QObject::connect(ui->inputFontComboBoxStyle, SIGNAL(currentTextChanged(QString)), this, SLOT(fontStyleChanged()));
     QObject::connect(ui->rowFontSize, SIGNAL(valueChanged()), this, SLOT(fontSizeChanged()));
     QObject::connect(ui->inputTextEditCharacters, SIGNAL(textChanged()), this, SLOT(inputCharactersChanged()));
+    // Drop area calls onFontFileDropped via callback (no MOC needed).
 
     updateSourceModeUi();
 }
@@ -148,6 +262,47 @@ InputSettingsPanel::~InputSettingsPanel()
     delete ui;
 }
 
+void InputSettingsPanel::onFontFileModeToggled(bool fileSelected)
+{
+    Q_UNUSED(fileSelected);
+    if ( m_btnFontFile != nullptr && m_btnFontFile->isChecked() ) {
+        mValue.inputSource = SGFInputSource::FontFile;
+    }
+    updateSourceModeUi();
+    emitValueChanged();
+}
+
+void InputSettingsPanel::onFontFileDropped(const QString &path)
+{
+    const QString ext = QFileInfo(path).suffix().toLower();
+    if ( !(ext == QStringLiteral("ttf") || ext == QStringLiteral("otf") || ext == QStringLiteral("ttc")) ) {
+        return;
+    }
+
+    const int fontId = QFontDatabase::addApplicationFont(path);
+    const QStringList fams = QFontDatabase::applicationFontFamilies(fontId);
+    if ( fams.isEmpty() ) {
+        m_fontFileNameLabel->setText(tr("Font: (invalid font file)"));
+        return;
+    }
+
+    mValue.inputSource = SGFInputSource::FontFile;
+    mValue.fontFilePath = path;
+    mValue.fontFamily = fams.first();
+
+    // Sync UI selectors to the loaded family.
+    ui->inputFontComboBoxFamily->setCurrentText(mValue.fontFamily);
+    fontFamilyChanged();
+    m_fontFileNameLabel->setText(tr("Font: %1").arg(mValue.fontFamily));
+
+    if ( m_btnFontFile != nullptr ) {
+        m_btnFontFile->setChecked(true);
+    }
+
+    updateSourceModeUi();
+    emitValueChanged();
+}
+
 void InputSettingsPanel::updateSourceModeUi()
 {
     const bool png = m_btnPng != nullptr && m_btnPng->isChecked();
@@ -155,7 +310,9 @@ void InputSettingsPanel::updateSourceModeUi()
 
     // System-font controls should disappear entirely in PNG mode.
     // (They are irrelevant and visually confusing when configuring PNG glyph inputs.)
+    const bool file = m_btnFontFile != nullptr && m_btnFontFile->isChecked();
     const bool sys = !png;
+    m_fontFileWidget->setVisible(file);
     ui->inputFontComboBoxFamily->setVisible(sys);
     ui->inputFontComboBoxStyle->setVisible(sys);
     ui->rowFontSize->setVisible(sys);
@@ -167,7 +324,9 @@ void InputSettingsPanel::updateSourceModeUi()
     ui->label_32->setVisible(sys);   // "Size:"
     ui->label_2->setVisible(sys);    // "Sprite Font Characters"
 
-    ui->inputFontComboBoxFamily->setEnabled(!png);
+    // In font-file mode we keep the font family box visible but locked to the loaded family.
+    ui->inputFontComboBoxFamily->setVisible(!png);
+    ui->inputFontComboBoxFamily->setEnabled(!png && !file);
     ui->inputFontComboBoxStyle->setEnabled(!png);
     ui->rowFontSize->setEnabled(!png);
     ui->inputTextEditCharacters->setEnabled(!png);
@@ -233,7 +392,13 @@ void InputSettingsPanel::emitValueChanged()
 {
     if ( mEmitSignals ) {
         readPngTableIntoSettings();
-        mValue.inputSource = (m_btnPng != nullptr && m_btnPng->isChecked()) ? SGFInputSource::PngSprites : SGFInputSource::SystemFont;
+        if ( m_btnPng != nullptr && m_btnPng->isChecked() ) {
+            mValue.inputSource = SGFInputSource::PngSprites;
+        } else if ( m_btnFontFile != nullptr && m_btnFontFile->isChecked() ) {
+            mValue.inputSource = SGFInputSource::FontFile;
+        } else {
+            mValue.inputSource = SGFInputSource::SystemFont;
+        }
         mValue.pngFontFaceName = m_pngFaceEdit->text();
         emit valueChanged(mValue);
     }
@@ -246,7 +411,13 @@ void InputSettingsPanel::onPngModeToggled(bool)
         return;
     }
     readPngTableIntoSettings();
-    mValue.inputSource = (m_btnPng != nullptr && m_btnPng->isChecked()) ? SGFInputSource::PngSprites : SGFInputSource::SystemFont;
+    if ( m_btnPng != nullptr && m_btnPng->isChecked() ) {
+        mValue.inputSource = SGFInputSource::PngSprites;
+    } else if ( m_btnFontFile != nullptr && m_btnFontFile->isChecked() ) {
+        mValue.inputSource = SGFInputSource::FontFile;
+    } else {
+        mValue.inputSource = SGFInputSource::SystemFont;
+    }
     mValue.pngFontFaceName = m_pngFaceEdit->text();
     emit valueChanged(mValue);
 }
@@ -353,6 +524,10 @@ void InputSettingsPanel::setValue(const SGFInputSettings & value)
         if ( m_btnPng ) {
             m_btnPng->setChecked(true);
         }
+    } else if ( mValue.inputSource == SGFInputSource::FontFile ) {
+        if ( m_btnFontFile ) {
+            m_btnFontFile->setChecked(true);
+        }
     } else {
         if ( m_btnSystemFont ) {
             m_btnSystemFont->setChecked(true);
@@ -373,6 +548,14 @@ void InputSettingsPanel::setValue(const SGFInputSettings & value)
 
     ui->rowFontSize->setIntValue(static_cast<int>(mValue.fontSize));
     ui->inputTextEditCharacters->setText(mValue.characters);
+
+    if ( m_fontFileNameLabel != nullptr ) {
+        if ( mValue.inputSource == SGFInputSource::FontFile && !mValue.fontFamily.isEmpty() ) {
+            m_fontFileNameLabel->setText(tr("Font: %1").arg(mValue.fontFamily));
+        } else {
+            m_fontFileNameLabel->setText(tr("Font: (drop a file below)"));
+        }
+    }
 
     rebuildPngTable();
     updateSourceModeUi();
@@ -444,7 +627,43 @@ void InputSettingsPanel::fontSizeChanged()
 
 void InputSettingsPanel::inputCharactersChanged()
 {
-    mValue.characters = ui->inputTextEditCharacters->toPlainText();
+    const QString raw = ui->inputTextEditCharacters->toPlainText();
+
+    // Ensure characters are unique in the editor (e.g. typing "AAAA" keeps a single "A").
+    // Keep first occurrence order so pasted character sets remain stable.
+    QString uniq;
+    uniq.reserve(raw.size());
+    QSet<QChar> seen;
+    seen.reserve(raw.size());
+
+    // Preserve caret position as best-effort.
+    const int oldPos = ui->inputTextEditCharacters->textCursor().position();
+    int newPos = oldPos;
+
+    for ( int i = 0; i < raw.size(); ++i )
+    {
+        const QChar c = raw[i];
+        const bool isNew = !seen.contains(c);
+        if ( isNew ) {
+            seen.insert(c);
+            uniq.append(c);
+        } else {
+            if ( i < oldPos ) {
+                newPos = std::max(0, newPos - 1);
+            }
+        }
+    }
+
+    if ( uniq != raw ) {
+        const bool prev = ui->inputTextEditCharacters->blockSignals(true);
+        ui->inputTextEditCharacters->setPlainText(uniq);
+        QTextCursor tc = ui->inputTextEditCharacters->textCursor();
+        tc.setPosition(std::min(newPos, static_cast<int>(uniq.size())));
+        ui->inputTextEditCharacters->setTextCursor(tc);
+        ui->inputTextEditCharacters->blockSignals(prev);
+    }
+
+    mValue.characters = uniq;
 
     if ( mEmitSignals ) {
         emit valueChanged(mValue);

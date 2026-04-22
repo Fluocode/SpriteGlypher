@@ -11,6 +11,10 @@ UnderlayEffectSettingsPanel::UnderlayEffectSettingsPanel(QWidget *parent) :
     ui->rowAngle->configureInt(0, 360, 1);
     ui->rowDistance->configureInt(0, 512, 1);
     ui->rowSize->configureInt(0, 512, 1);
+    ui->rowBevel->configureInt(0, 100, 1);
+    ui->rowBevelIntensity->configureInt(25, 400, 1);
+    ui->rowBevelAngle->configureInt(0, 360, 1);
+    ui->rowBevelBlur->configureInt(0, 64, 1);
 
     ui->comboBoxBlend->addItems(SGFEffectTypes::BlendModeOptions());
     ui->segFillType->setOptions(QStringList() << "Color" << "Gradient");
@@ -23,6 +27,10 @@ UnderlayEffectSettingsPanel::UnderlayEffectSettingsPanel(QWidget *parent) :
     QObject::connect(ui->rowAngle, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
     QObject::connect(ui->rowDistance, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
     QObject::connect(ui->rowSize, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->rowBevel, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->rowBevelIntensity, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->rowBevelAngle, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->rowBevelBlur, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
 }
 
 UnderlayEffectSettingsPanel::~UnderlayEffectSettingsPanel()
@@ -49,6 +57,9 @@ void UnderlayEffectSettingsPanel::setValue(const SGFUnderlayEffectSettings &valu
     ui->rowAngle->setIntValue(static_cast<int>(mValue.angle));
     ui->rowDistance->setIntValue(static_cast<int>(mValue.distance));
     ui->rowSize->setIntValue(static_cast<int>(mValue.size));
+    ui->rowBevel->setIntValue(mValue.bevelAmount);
+    ui->rowBevelAngle->setIntValue(static_cast<int>(mValue.bevelAngle));
+    ui->rowBevelBlur->setIntValue(static_cast<int>(mValue.bevelBlur));
 
     mIsUpdatingGui = false;
     refreshVisibleElements();
@@ -78,6 +89,10 @@ void UnderlayEffectSettingsPanel::subWidgetValueChanged()
     mValue.angle = static_cast<float>(ui->rowAngle->intValue());
     mValue.distance = static_cast<float>(ui->rowDistance->intValue());
     mValue.size = static_cast<float>(ui->rowSize->intValue());
+    mValue.bevelAmount = ui->rowBevel->intValue();
+    mValue.bevelIntensity = static_cast<float>(ui->rowBevelIntensity->intValue());
+    mValue.bevelAngle = static_cast<float>(ui->rowBevelAngle->intValue());
+    mValue.bevelBlur = static_cast<float>(ui->rowBevelBlur->intValue());
 
     emit valueChanged(mValue);
     refreshVisibleElements();

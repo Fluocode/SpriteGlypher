@@ -1,4 +1,5 @@
 #include "SGFUnderlayEffect.h"
+#include "SGFInnerBevel.h"
 
 #include <cmath>
 #include <QtMath>
@@ -9,6 +10,10 @@ const QString SGFUnderlayEffect::kGradientKey = QString("underlayGradient");
 const QString SGFUnderlayEffect::kAngleKey = QString("underlayAngle");
 const QString SGFUnderlayEffect::kDistanceKey = QString("underlayDistance");
 const QString SGFUnderlayEffect::kSizeKey = QString("underlaySize");
+const QString SGFUnderlayEffect::kBevelAmountKey = QString("underlayBevelAmount");
+const QString SGFUnderlayEffect::kBevelAngleKey = QString("underlayBevelAngle");
+const QString SGFUnderlayEffect::kBevelBlurKey = QString("underlayBevelBlur");
+const QString SGFUnderlayEffect::kBevelIntensityKey = QString("underlayBevelIntensity");
 
 SGFUnderlayEffect::SGFUnderlayEffect()
 {
@@ -20,7 +25,7 @@ void SGFUnderlayEffect::scaleEffect(float factor)
     SGFUnderlayEffectSettings settings = getSettings();
     settings.distance *= factor;
     settings.size *= factor;
-    // blur intentionally not present
+    settings.bevelBlur *= factor;
     setSettings(settings);
 }
 
@@ -64,6 +69,17 @@ void SGFUnderlayEffect::applyToGlyph(SGFGlyph& glyph)
         painter.fillPath(path, settings.color);
     }
     painter.end();
+
+    if ( settings.bevelAmount > 0 ) {
+        SGFInnerBevel::applyToImage(
+            glyph.backgroundImage,
+            path,
+            static_cast<float>(settings.bevelAmount),
+            settings.bevelAngle,
+            settings.bevelBlur,
+            settings.opacity,
+            settings.bevelIntensity);
+    }
 }
 
 void SGFUnderlayEffect::setDefaultParameters()
@@ -83,6 +99,10 @@ SGFUnderlayEffectSettings SGFUnderlayEffect::getSettings()
     settings.angle = mParameters[kAngleKey].value<float>();
     settings.distance = mParameters[kDistanceKey].value<float>();
     settings.size = mParameters[kSizeKey].value<float>();
+    settings.bevelAmount = mParameters.value(kBevelAmountKey, 0).toInt();
+    settings.bevelAngle = mParameters.value(kBevelAngleKey, 135.0f).toFloat();
+    settings.bevelBlur = mParameters.value(kBevelBlurKey, 0.0f).toFloat();
+    settings.bevelIntensity = mParameters.value(kBevelIntensityKey, 100.0f).toFloat();
     return settings;
 }
 
@@ -98,6 +118,10 @@ void SGFUnderlayEffect::setSettings(SGFUnderlayEffectSettings settings)
     mParameters[kAngleKey] = QVariant::fromValue<float>(settings.angle);
     mParameters[kDistanceKey] = QVariant::fromValue<float>(settings.distance);
     mParameters[kSizeKey] = QVariant::fromValue<float>(settings.size);
+    mParameters[kBevelAmountKey] = QVariant::fromValue<int>(settings.bevelAmount);
+    mParameters[kBevelAngleKey] = QVariant::fromValue<float>(settings.bevelAngle);
+    mParameters[kBevelBlurKey] = QVariant::fromValue<float>(settings.bevelBlur);
+    mParameters[kBevelIntensityKey] = QVariant::fromValue<float>(settings.bevelIntensity);
 }
 
 bool SGFUnderlayEffect::writeSubclassToXmlStream(QXmlStreamWriter &writer)
@@ -116,6 +140,10 @@ bool SGFUnderlayEffect::writeSubclassToXmlStream(QXmlStreamWriter &writer)
     writer.writeAttribute(kAngleKey, QString::number(settings.angle));
     writer.writeAttribute(kDistanceKey, QString::number(settings.distance));
     writer.writeAttribute(kSizeKey, QString::number(settings.size));
+    writer.writeAttribute(kBevelAmountKey, QString::number(settings.bevelAmount));
+    writer.writeAttribute(kBevelAngleKey, QString::number(settings.bevelAngle));
+    writer.writeAttribute(kBevelBlurKey, QString::number(settings.bevelBlur));
+    writer.writeAttribute(kBevelIntensityKey, QString::number(settings.bevelIntensity));
     return true;
 }
 
@@ -129,6 +157,10 @@ void SGFUnderlayEffect::readSubclassFromXmlNode(const QDomElement &element)
     const QString xmlAngle = element.attribute(kAngleKey);
     const QString xmlDistance = element.attribute(kDistanceKey);
     const QString xmlSize = element.attribute(kSizeKey);
+    const QString xmlBevelAmount = element.attribute(kBevelAmountKey);
+    const QString xmlBevelAngle = element.attribute(kBevelAngleKey);
+    const QString xmlBevelBlur = element.attribute(kBevelBlurKey);
+    const QString xmlBevelIntensity = element.attribute(kBevelIntensityKey);
 
     if ( !xmlFillType.isEmpty() ) { settings.fillType = SGFEffectTypes::FillTypeFromString(xmlFillType); }
     if ( settings.fillType != SGFFillType::Fill_Gradient ) {
@@ -139,6 +171,10 @@ void SGFUnderlayEffect::readSubclassFromXmlNode(const QDomElement &element)
     if ( !xmlAngle.isEmpty() ) { settings.angle = xmlAngle.toFloat(); }
     if ( !xmlDistance.isEmpty() ) { settings.distance = xmlDistance.toFloat(); }
     if ( !xmlSize.isEmpty() ) { settings.size = xmlSize.toFloat(); }
+    if ( !xmlBevelAmount.isEmpty() ) { settings.bevelAmount = xmlBevelAmount.toInt(); }
+    if ( !xmlBevelAngle.isEmpty() ) { settings.bevelAngle = xmlBevelAngle.toFloat(); }
+    if ( !xmlBevelBlur.isEmpty() ) { settings.bevelBlur = xmlBevelBlur.toFloat(); }
+    if ( !xmlBevelIntensity.isEmpty() ) { settings.bevelIntensity = xmlBevelIntensity.toFloat(); }
 
     setSettings(settings);
 }

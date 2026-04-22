@@ -15,6 +15,8 @@ struct SGFSparkleOverlayEffectSettings
     float rotation;          // degrees
     float offsetX;           // px
     float offsetY;           // px
+    /** Widen the clip mask so pattern pixels near the ink edge are not hard-cut (px). */
+    float edgeBleed;
 
     SGFSparkleOverlayEffectSettings()
         : enabled(true)
@@ -25,6 +27,7 @@ struct SGFSparkleOverlayEffectSettings
         , rotation(0.0f)
         , offsetX(0.0f)
         , offsetY(0.0f)
+        , edgeBleed(0.0f)
     {}
 };
 
@@ -44,6 +47,7 @@ public:
     static const QString kRotationKey;
     static const QString kOffsetXKey;
     static const QString kOffsetYKey;
+    static const QString kEdgeBleedKey;
 
 public:
     SGFSparkleOverlayEffect();

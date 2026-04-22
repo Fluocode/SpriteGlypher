@@ -14,6 +14,10 @@ struct SGFFillEffectSettings
     SGFGradient gradient;       //< Gradient - Used only for Gradient Fill Mode.
     SGFPattern pattern;         //< Pattern Info - Used only for Pattern Fill Mode.
     int inset;                  //< Shrink the path by N pixels before filling (shine effects).
+    int bevelAmount;            //< 0 = off; inner bevel strength (0–100).
+    float bevelAngle;           //< Light direction (degrees).
+    float bevelBlur;            //< Softens the bevel mask (pixels).
+    float bevelIntensity;       //< 100 = default; higher = stronger relief.
 
     SGFFillEffectSettings() :
         enabled(true),
@@ -23,7 +27,10 @@ struct SGFFillEffectSettings
         color(QColor(QStringLiteral("#d38e00"))),
         gradient(),
         pattern(),
-        inset(0)
+        inset(0),
+        bevelAmount(0),
+        bevelAngle(135.0f),
+        bevelBlur(0.0f)
     {
         gradient.setDefaultLinearGradient();
     }
@@ -47,6 +54,10 @@ public:
     static const QString kPatternKey;
     static const QString kPatternScaleKey;
     static const QString kInsetKey;
+    static const QString kBevelAmountKey;
+    static const QString kBevelAngleKey;
+    static const QString kBevelBlurKey;
+    static const QString kBevelIntensityKey;
 
 
 

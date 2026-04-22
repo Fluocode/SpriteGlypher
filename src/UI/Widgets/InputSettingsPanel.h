@@ -10,6 +10,8 @@ class QToolButton;
 class QTableWidget;
 class QLineEdit;
 class QPushButton;
+class QLabel;
+class QFrame;
 
 namespace Ui {
 class InputSettingsPanel;
@@ -46,6 +48,8 @@ private slots:
     void onPngMoveUp();
     void onPngMoveDown();
     void onPngBrowseClicked();
+    void onFontFileModeToggled(bool fileSelected);
+    void onFontFileDropped(const QString &path);
 
 private:
     void updateSourceModeUi();
@@ -69,6 +73,11 @@ private:
     QPushButton *m_pngRemove = nullptr;
     QPushButton *m_pngUp = nullptr;
     QPushButton *m_pngDown = nullptr;
+
+    QToolButton *m_btnFontFile = nullptr;
+    QWidget *m_fontFileWidget = nullptr;
+    QLabel *m_fontFileNameLabel = nullptr;
+    QFrame *m_fontFileDropArea = nullptr;
 };
 
 #endif // INPUTSETTINGSPANEL_H

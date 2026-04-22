@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "SpriteGlypher"
-#define MyAppVersion "1.0.3"
+#define MyAppVersion "1.0.5"
 #define MyAppPublisher "Fluocode"
 #define MyAppURL "https://www.fluocode.com/"
 #define MyAppExeName "SpriteGlypher.exe"

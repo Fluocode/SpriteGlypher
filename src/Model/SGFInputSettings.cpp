@@ -10,6 +10,7 @@ const QString SGFInputSettings::kFontStyleKey = QString("fontStyle");
 const QString SGFInputSettings::kFontSizeKey = QString("fontSize");
 const QString SGFInputSettings::kCharactersKey = QString("characters");
 const QString SGFInputSettings::kInputSourceKey = QString("inputSource");
+const QString SGFInputSettings::kFontFilePathKey = QString("fontFilePath");
 const QString SGFInputSettings::kPngFaceNameKey = QString("pngFaceName");
 const QString SGFInputSettings::kPngSlotKey = QString("PngSlot");
 const QString SGFInputSettings::kPngSlotCharKey = QString("char");
@@ -67,7 +68,12 @@ bool SGFInputSettings::writeToXmlStream(QXmlStreamWriter &writer)
     writer.writeAttribute(kCharactersKey, characters);
     writer.writeAttribute(
         kInputSourceKey,
-        inputSource == SGFInputSource::PngSprites ? QStringLiteral("png") : QStringLiteral("font"));
+        inputSource == SGFInputSource::PngSprites
+            ? QStringLiteral("png")
+            : (inputSource == SGFInputSource::FontFile ? QStringLiteral("file") : QStringLiteral("font")));
+    if ( inputSource == SGFInputSource::FontFile && !fontFilePath.isEmpty() ) {
+        writer.writeAttribute(kFontFilePathKey, fontFilePath);
+    }
     writer.writeAttribute(kPngFaceNameKey, pngFontFaceName);
 
     for ( const SGFPngGlyphSlot &slot : pngGlyphs ) {
@@ -88,6 +94,7 @@ void SGFInputSettings::readFromXmlNode(const QDomElement &element)
     QString xmlFontStyle = element.attribute(kFontStyleKey);
     QString xmlFontSize = element.attribute(kFontSizeKey);
     QString xmlCharacters = element.attribute(kCharactersKey);
+    QString xmlFontFilePath = element.attribute(kFontFilePathKey);
 
     if ( !xmlFontFamily.isEmpty() ) {
         fontFamily = xmlFontFamily;
@@ -109,6 +116,12 @@ void SGFInputSettings::readFromXmlNode(const QDomElement &element)
     const QString srcAttr = element.attribute(kInputSourceKey);
     if ( srcAttr.compare(QLatin1String("png"), Qt::CaseInsensitive) == 0 ) {
         inputSource = SGFInputSource::PngSprites;
+    } else if ( srcAttr.compare(QLatin1String("file"), Qt::CaseInsensitive) == 0 ) {
+        inputSource = SGFInputSource::FontFile;
+    }
+
+    if ( !xmlFontFilePath.isEmpty() ) {
+        fontFilePath = xmlFontFilePath;
     }
 
     const QString faceAttr = element.attribute(kPngFaceNameKey);

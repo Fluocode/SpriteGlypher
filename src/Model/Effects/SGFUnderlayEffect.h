@@ -19,6 +19,10 @@ struct SGFUnderlayEffectSettings
     float angle;      // degrees
     float distance;   // px
     float size;       // px (grow/shrink amount)
+    int bevelAmount;  // 0 = off; inner bevel on underlay (0–100)
+    float bevelAngle;
+    float bevelBlur;
+    float bevelIntensity;
 
     SGFUnderlayEffectSettings()
         : enabled(true)
@@ -30,6 +34,10 @@ struct SGFUnderlayEffectSettings
         , angle(45.0f)
         , distance(1.0f)
         , size(0.0f)
+        , bevelAmount(0)
+        , bevelAngle(135.0f)
+        , bevelBlur(0.0f)
+        , bevelIntensity(100.0f)
     {
         gradient.setDefaultLinearGradient();
     }
@@ -49,6 +57,10 @@ public:
     static const QString kAngleKey;
     static const QString kDistanceKey;
     static const QString kSizeKey;
+    static const QString kBevelAmountKey;
+    static const QString kBevelAngleKey;
+    static const QString kBevelBlurKey;
+    static const QString kBevelIntensityKey;
 
 public:
     SGFUnderlayEffect();
