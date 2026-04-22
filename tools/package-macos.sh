@@ -33,9 +33,17 @@ fi
 
 APP_NAME="$(basename "${APP}")"
 OUT_APP="${DIST_DIR}/${APP_NAME}"
+APP_BASENAME="${APP_NAME%.app}"
+DMG_PATH="${DIST_DIR}/${APP_BASENAME}.dmg"
 
 rm -rf "${OUT_APP}"
 cp -R "${APP}" "${OUT_APP}"
+
+# macdeployqt won't overwrite an existing qt.conf; remove any prior one
+QT_CONF_PATH="${OUT_APP}/Contents/Resources/qt.conf"
+if [[ -f "${QT_CONF_PATH}" ]]; then
+  rm -f "${QT_CONF_PATH}"
+fi
 
 QT_BIN="${QTDIR:-}/bin"
 if [[ ! -x "${QT_BIN}/macdeployqt" ]]; then
@@ -45,6 +53,10 @@ if [[ ! -x "${QT_BIN}/macdeployqt" ]]; then
 fi
 
 if [[ "${MAKE_DMG}" == "1" ]]; then
+  # hdiutil will fail if the output DMG already exists
+  if [[ -f "${DMG_PATH}" ]]; then
+    rm -f "${DMG_PATH}"
+  fi
   "${QT_BIN}/macdeployqt" "${OUT_APP}" -dmg
 else
   "${QT_BIN}/macdeployqt" "${OUT_APP}"
