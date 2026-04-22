@@ -61,7 +61,6 @@ private:
 
     bool mEmitSignals = true;
     SGFInputSettings mValue;
-    QFontDatabase mFontDatabase;
 
     QWidget *m_sourceGroup = nullptr;
     QToolButton *m_btnSystemFont = nullptr;

@@ -581,7 +581,7 @@ SGFInputSettings InputSettingsPanel::getValue() const
 void InputSettingsPanel::fontFamilyChanged()
 {
     mValue.fontFamily = ui->inputFontComboBoxFamily->currentText();
-    QStringList fontStyles = mFontDatabase.styles(mValue.fontFamily);
+    QStringList fontStyles = QFontDatabase::styles(mValue.fontFamily);
 
     bool prevEmitSignals = mEmitSignals;
     mEmitSignals = false;

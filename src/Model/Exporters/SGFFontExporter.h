@@ -42,6 +42,7 @@ public:
 
 public:
     SGFFontExporter();
+    virtual ~SGFFontExporter() = default;
 
 public:
     virtual bool exportFont(SGFDocument *doc) = 0;

@@ -59,28 +59,28 @@ public:
     //virtual QSize sizeRequiredForGlyph(SGFGlyph& glyph) = 0;
 
     /** Return a clone (deep copy) of this effect so that we can duplicate effects on the object. */
-    virtual SGFEffect::Ptr clone() { return SGFEffect::Ptr(new SGFShadowEffect(*this)); }
+    SGFEffect::Ptr clone() override { return SGFEffect::Ptr(new SGFShadowEffect(*this)); }
 
     /** Get the amount of padding required over the base size for this glyph to accomodate for this effect. */
-    virtual SGFPadding paddingRequiredForGlyph(SGFGlyph& glyph);
+    SGFPadding paddingRequiredForGlyph(SGFGlyph& glyph) override;
 
     /** Apply this effect to the given glyph. */
-    virtual void applyToGlyph(SGFGlyph& glyph);
+    void applyToGlyph(SGFGlyph& glyph) override;
 
     /** Set default parameters for this effect. */
-    virtual void setDefaultParameters();
+    void setDefaultParameters() override;
 
     /** Scale the settings for this effect when the document is scaled to ensure stroke width etc are scaled appropriately. */
-    virtual void scaleEffect(float factor);
+    void scaleEffect(float factor) override;
 
 
 protected:
 
     /** Write the parameters for this effect to the given XML stream. */
-    virtual bool writeSubclassToXmlStream(QXmlStreamWriter &writer);
+    bool writeSubclassToXmlStream(QXmlStreamWriter &writer) override;
 
     /** Read the parameters for this effect from the given Xml Attributes. */
-    virtual void readSubclassFromXmlNode(const QDomElement &element);
+    void readSubclassFromXmlNode(const QDomElement &element) override;
 
 
     // Settings
