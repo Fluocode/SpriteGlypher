@@ -62,7 +62,20 @@ bool SGFFontExporterBMFontJson::writeDocumentToPath(SGFDocument *doc, const QStr
         return false;
     }
 
-    data.page0FileName = QFileInfo(pngPath).fileName();
+    const QFileInfo pngInfo(pngPath);
+    const QString pngDir = pngInfo.dir().absolutePath();
+    const QString pngBase = pngInfo.completeBaseName();
+    const QString pngExt = pngInfo.suffix().isEmpty() ? QStringLiteral("png") : pngInfo.suffix();
+
+    data.pageFileNames.clear();
+    if ( data.pages <= 1 ) {
+        data.pageFileNames.append(pngInfo.fileName());
+    } else {
+        for ( int i = 0; i < data.pages; ++i ) {
+            data.pageFileNames.append(QStringLiteral("%1_%2.%3").arg(pngBase).arg(i).arg(pngExt));
+        }
+    }
+    data.page0FileName = !data.pageFileNames.isEmpty() ? data.pageFileNames.first() : pngInfo.fileName();
 
     QString padding = QStringLiteral("%1,%2,%3,%4")
             .arg(data.paddingUp)
@@ -99,10 +112,12 @@ bool SGFFontExporterBMFontJson::writeDocumentToPath(SGFDocument *doc, const QStr
 
     QJsonArray pages;
     {
-        QJsonObject page0;
-        page0.insert(QStringLiteral("id"), 0);
-        page0.insert(QStringLiteral("file"), data.page0FileName);
-        pages.append(page0);
+        for ( int i = 0; i < data.pageFileNames.size(); ++i ) {
+            QJsonObject p;
+            p.insert(QStringLiteral("id"), i);
+            p.insert(QStringLiteral("file"), data.pageFileNames[i]);
+            pages.append(p);
+        }
     }
 
     QJsonArray chars;
@@ -149,7 +164,23 @@ bool SGFFontExporterBMFontJson::writeDocumentToPath(SGFDocument *doc, const QStr
     file.write(docJson.toJson(QJsonDocument::Indented));
     file.close();
 
-    bool pngOk = doc->getSpriteFont().textureAtlas.save(pngPath, "PNG");
+    // Write texture pages
+    bool pngOk = true;
+    const SGFSpriteFont &sf = doc->getSpriteFont();
+    const QVector<QImage> pageImgs = !sf.textureAtlases.isEmpty()
+        ? sf.textureAtlases
+        : QVector<QImage>({ sf.textureAtlas });
+
+    for ( int i = 0; i < pageImgs.size(); ++i ) {
+        const QString outPath = (data.pages <= 1)
+            ? pngPath
+            : (pngDir + QStringLiteral("/") + data.pageFileNames[i]);
+        if ( !pageImgs[i].save(outPath, "PNG") ) {
+            pngOk = false;
+            break;
+        }
+    }
+
     if ( !pngOk ) {
         mLastError = "Save failed.";
     }

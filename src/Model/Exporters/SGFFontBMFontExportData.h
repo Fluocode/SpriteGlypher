@@ -58,7 +58,8 @@ struct SGFBMFontExportData
     int greenChnl = 4;
     int blueChnl = 4;
 
-    QString page0FileName;
+    QVector<QString> pageFileNames; // size == pages; each is a file name (no path)
+    QString page0FileName; // legacy convenience (mirrors pageFileNames[0] when present)
 
     QVector<SGFBMFontCharEntry> chars;
     QVector<SGFBMFontKerningEntry> kernings;

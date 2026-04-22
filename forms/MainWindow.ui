@@ -470,6 +470,36 @@
            </widget>
           </item>
           <item>
+           <widget class="QLabel" name="labelAtlasPage">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Page:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="spinAtlasPage">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>1</number>
+            </property>
+            <property name="toolTip">
+             <string>Select which atlas page to preview when pagination is enabled.</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QSlider" name="zoomSlider">
             <property name="minimum">
              <number>25</number>

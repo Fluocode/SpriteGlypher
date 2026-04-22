@@ -17,6 +17,7 @@ private:
     static const QString kColorKey;
     static const QString kPaddingKey;
     static const QString kSpacingKey;
+    static const QString kPaginateKey;
 
 public:
     SGFGenerationSettings();
@@ -32,6 +33,7 @@ public:
     QColor color;       //< Preview-only backdrop in the atlas view (contrast for strokes/shadows). Never baked into the exported PNG.
     int padding;        //< Pixel padding around the edge of the texture.
     int spacing;        //< Minimum pixel spacing between glyphs.
+    bool paginate;      //< When true, spill into multiple atlas pages (exports multiple PNGs).
 
 };
 

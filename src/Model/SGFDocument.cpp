@@ -380,7 +380,8 @@ bool SGFDocument::generateGlyphs()
     }
     else
     {
-        glyphFont = mFontDatabase.font(resolvedFamily, mInputSettings.fontStyle, mInputSettings.fontSize);
+        const QFontDatabase db;
+        glyphFont = db.font(resolvedFamily, mInputSettings.fontStyle, mInputSettings.fontSize);
     }
 
     QVector<QChar> characters = mInputSettings.uniqueCharacters();
@@ -466,8 +467,232 @@ bool SGFDocument::generateGlyphs()
 
 bool SGFDocument::layoutGlyphsOnAtlas()
 {
-    mSpriteFont.doGlyphsFit = layoutGlyphs(mSpriteFont, mGenerationSettings, true);
+    if ( mGenerationSettings.paginate ) {
+        mSpriteFont.doGlyphsFit = layoutGlyphsPaged(mSpriteFont, mGenerationSettings, true);
+        // Keep legacy page0 mirror consistent even if paged layout didn't push the vector for some reason.
+        if ( mSpriteFont.textureAtlases.isEmpty() && !mSpriteFont.textureAtlas.isNull() ) {
+            mSpriteFont.textureAtlases.append(mSpriteFont.textureAtlas);
+        }
+        if ( !mSpriteFont.textureAtlases.isEmpty() ) {
+            mSpriteFont.textureAtlas = mSpriteFont.textureAtlases.first();
+        }
+    } else {
+        const bool singleFit = layoutGlyphs(mSpriteFont, mGenerationSettings, true);
+
+        // Auto-enable pagination when a fixed-size page can't hold all glyphs.
+        // (Auto width/height == 0 means "Auto" and we keep single-page behavior.)
+        const int kAutoMaxPage = 2048;
+
+        const bool isAutoSize = (mGenerationSettings.width == 0 || mGenerationSettings.height == 0);
+        const bool autoExceeded = isAutoSize
+            && (mSpriteFont.textureAtlas.width() > kAutoMaxPage || mSpriteFont.textureAtlas.height() > kAutoMaxPage);
+
+        if ( (!singleFit && mGenerationSettings.width > 0 && mGenerationSettings.height > 0) || autoExceeded ) {
+            mGenerationSettings.paginate = true;
+            mHasUnsavedData = true;
+            // When coming from Auto sizing, lock max page size to 2048 so pagination has a sensible limit.
+            // (Otherwise paged layout falls back to single-page behavior when width/height are 0.)
+            if ( isAutoSize ) {
+                mGenerationSettings.width = kAutoMaxPage;
+                mGenerationSettings.height = kAutoMaxPage;
+            }
+            mSpriteFont.doGlyphsFit = layoutGlyphsPaged(mSpriteFont, mGenerationSettings, true);
+            if ( !mSpriteFont.textureAtlases.isEmpty() ) {
+                mSpriteFont.textureAtlas = mSpriteFont.textureAtlases.first();
+            }
+        } else {
+            mSpriteFont.doGlyphsFit = singleFit;
+            mSpriteFont.textureAtlases.clear();
+            if ( !mSpriteFont.textureAtlas.isNull() ) {
+                mSpriteFont.textureAtlases.append(mSpriteFont.textureAtlas);
+            }
+            for ( SGFGlyph &g : mSpriteFont.glyphs ) {
+                g.atlasPage = 0;
+            }
+        }
+    }
     return true;
+}
+
+bool SGFDocument::layoutGlyphsPaged(SGFSpriteFont &spriteFont, const SGFGenerationSettings &settings, bool doPaint)
+{
+    // When paginating, treat settings.width/height as the *maximum* page size.
+    // Each page is created as small as possible (within that max) to fit the remaining glyphs.
+    const int maxW = settings.width;
+    const int maxH = settings.height;
+    const int padding = settings.padding;
+
+    // If either axis is Auto, fall back to single-page (existing behavior).
+    if ( maxW == 0 || maxH == 0 ) {
+        const bool ok = layoutGlyphs(spriteFont, settings, doPaint);
+        spriteFont.textureAtlases.clear();
+        if ( doPaint && !spriteFont.textureAtlas.isNull() ) {
+            spriteFont.textureAtlases.append(spriteFont.textureAtlas);
+        }
+        for ( SGFGlyph &g : spriteFont.glyphs ) {
+            g.atlasPage = 0;
+        }
+        return ok;
+    }
+
+    auto candidateSizes = [&](int limit) -> QVector<int> {
+        QVector<int> s;
+        int v = 128;
+        while ( v < limit ) {
+            s.append(v);
+            v *= 2;
+        }
+        s.append(limit);
+        return s;
+    };
+
+    const QVector<int> wOpts = candidateSizes(maxW);
+    const QVector<int> hOpts = candidateSizes(maxH);
+
+    struct PackResult {
+        int fitCount = 0;
+        bool fitAll = false;
+        QVector<QRect> rects; // size == fitCount
+    };
+
+    auto pack = [&](const QVector<SGFGlyph*> &glyphs, const QSize &pageSize, int maxToPlace, bool assignRects) -> PackResult {
+        PackResult r;
+        if ( pageSize.width() <= 0 || pageSize.height() <= 0 ) {
+            return r;
+        }
+
+        const QRect paddedRect = QRect(0, 0, pageSize.width(), pageSize.height()).adjusted(padding, padding, -padding, -padding);
+        if ( paddedRect.width() <= 0 || paddedRect.height() <= 0 ) {
+            return r;
+        }
+
+        // Use exclusive bounds to avoid 1px overflow: valid X is [x0, x0 + width), same for Y.
+        const int x0 = paddedRect.x();
+        const int y0 = paddedRect.y();
+        const int x1 = x0 + paddedRect.width();
+        const int y1 = y0 + paddedRect.height();
+
+        QPoint cursor(paddedRect.x(), paddedRect.y());
+        int rowHeight = 0;
+
+        const int glyphCount = static_cast<int>(glyphs.size());
+        const int limit = (maxToPlace < 0) ? glyphCount : std::min(maxToPlace, glyphCount);
+        r.rects.reserve(limit);
+
+        for ( int i = 0; i < limit; ++i ) {
+            const SGFGlyph *g = glyphs[i];
+
+            // Can't fit even on an empty page.
+            if ( g->image.width() > paddedRect.width() || g->image.height() > paddedRect.height() ) {
+                break;
+            }
+
+            // Wrap row if this glyph would exceed usable width.
+            if ( cursor.x() + g->image.width() > x1 ) {
+                cursor.setY(cursor.y() + rowHeight + settings.spacing);
+                cursor.setX(paddedRect.x());
+                rowHeight = 0;
+            }
+
+            // Stop if this glyph would exceed usable height.
+            if ( cursor.y() + g->image.height() > y1 ) {
+                break;
+            }
+
+            const QRect dest(cursor.x(), cursor.y(), g->image.width(), g->image.height());
+            r.rects.append(dest);
+
+            cursor.setX(cursor.x() + g->image.width() + settings.spacing);
+            rowHeight = std::max(rowHeight, g->image.height());
+        }
+
+        r.fitCount = r.rects.size();
+        r.fitAll = (r.fitCount == glyphs.size());
+        Q_UNUSED(assignRects);
+        return r;
+    };
+
+    // Sort glyph pointers by height (like single-page), but do NOT reorder spriteFont.glyphs.
+    QVector<SGFGlyph*> remaining;
+    remaining.reserve(spriteFont.glyphs.size());
+    for ( SGFGlyph &g : spriteFont.glyphs ) {
+        remaining.append(&g);
+    }
+    std::sort(remaining.begin(), remaining.end(), [] (const SGFGlyph *a, const SGFGlyph *b) {
+        return a->minSize.height() > b->minSize.height();
+    });
+
+    spriteFont.textureAtlases.clear();
+    spriteFont.textureAtlas = QImage();
+
+    int pageIndex = 0;
+    bool allFit = true;
+
+    while ( !remaining.isEmpty() )
+    {
+        // Find the smallest candidate (by area, then perimeter) that fits ALL remaining glyphs.
+        QSize bestSize(maxW, maxH);
+        bool foundFitAll = false;
+        for ( int w : wOpts ) {
+            for ( int h : hOpts ) {
+                const QSize sz(w, h);
+                PackResult t = pack(remaining, sz, -1, false);
+                if ( t.fitAll ) {
+                    if ( !foundFitAll
+                         || (w * h) < (bestSize.width() * bestSize.height())
+                         || ((w * h) == (bestSize.width() * bestSize.height())
+                             && (w + h) < (bestSize.width() + bestSize.height())) )
+                    {
+                        bestSize = sz;
+                        foundFitAll = true;
+                    }
+                }
+            }
+        }
+
+        // If we can't fit all remaining in <= max, use max for this page (and spill the rest to next pages).
+        const QSize pageSize = foundFitAll ? bestSize : QSize(maxW, maxH);
+
+        // Pack as many as possible into this page.
+        PackResult placed = pack(remaining, pageSize, -1, true);
+        if ( placed.fitCount <= 0 ) {
+            allFit = false;
+            break;
+        }
+
+        QImage pageImg;
+        QPainter painter;
+        if ( doPaint ) {
+            pageImg = QImage(pageSize.width(), pageSize.height(), QImage::Format_ARGB32);
+            pageImg.fill(Qt::transparent);
+            painter.begin(&pageImg);
+        }
+
+        // Apply rects + paint
+        for ( int i = 0; i < placed.fitCount; ++i ) {
+            SGFGlyph *g = remaining[i];
+            g->atlasPage = pageIndex;
+            g->atlasRect = placed.rects[i];
+            if ( doPaint ) {
+                painter.drawImage(g->atlasRect, g->image);
+            }
+        }
+
+        if ( doPaint ) {
+            painter.end();
+            spriteFont.textureAtlases.append(pageImg);
+            if ( pageIndex == 0 ) {
+                spriteFont.textureAtlas = pageImg;
+            }
+        }
+
+        // Remove placed glyphs (front segment).
+        remaining.erase(remaining.begin(), remaining.begin() + placed.fitCount);
+        pageIndex++;
+    }
+
+    // If we didn't paint, still report "pages" via atlasPage + doGlyphsFit; exporters will regenerate anyway.
+    return allFit;
 }
 
 

@@ -60,7 +60,20 @@ bool SGFFontExporterBMFontXml::writeDocumentToPath(SGFDocument *doc, const QStri
         return false;
     }
 
-    data.page0FileName = QFileInfo(pngPath).fileName();
+    const QFileInfo pngInfo(pngPath);
+    const QString pngDir = pngInfo.dir().absolutePath();
+    const QString pngBase = pngInfo.completeBaseName();
+    const QString pngExt = pngInfo.suffix().isEmpty() ? QStringLiteral("png") : pngInfo.suffix();
+
+    data.pageFileNames.clear();
+    if ( data.pages <= 1 ) {
+        data.pageFileNames.append(pngInfo.fileName());
+    } else {
+        for ( int i = 0; i < data.pages; ++i ) {
+            data.pageFileNames.append(QStringLiteral("%1_%2.%3").arg(pngBase).arg(i).arg(pngExt));
+        }
+    }
+    data.page0FileName = !data.pageFileNames.isEmpty() ? data.pageFileNames.first() : pngInfo.fileName();
 
     QString padding = QStringLiteral("%1,%2,%3,%4")
             .arg(data.paddingUp)
@@ -80,7 +93,7 @@ bool SGFFontExporterBMFontXml::writeDocumentToPath(SGFDocument *doc, const QStri
     writer.writeStartDocument();
     writer.writeStartElement(QStringLiteral("font"));
     // If this comment is missing after export, the .fnt was not written by this build (wrong path or old exe).
-    writer.writeComment(QStringLiteral(" SpriteGlypher 1.0.3 bmfont-xml "));
+    writer.writeComment(QStringLiteral(" SpriteGlypher 1.0.6 bmfont-xml "));
 
     writer.writeStartElement(QStringLiteral("info"));
     writer.writeAttribute(QStringLiteral("face"), data.face);
@@ -111,10 +124,12 @@ bool SGFFontExporterBMFontXml::writeDocumentToPath(SGFDocument *doc, const QStri
     writer.writeEndElement();
 
     writer.writeStartElement(QStringLiteral("pages"));
-    writer.writeStartElement(QStringLiteral("page"));
-    writer.writeAttribute(QStringLiteral("id"), QStringLiteral("0"));
-    writer.writeAttribute(QStringLiteral("file"), data.page0FileName);
-    writer.writeEndElement();
+    for ( int i = 0; i < data.pageFileNames.size(); ++i ) {
+        writer.writeStartElement(QStringLiteral("page"));
+        writer.writeAttribute(QStringLiteral("id"), QString::number(i));
+        writer.writeAttribute(QStringLiteral("file"), data.pageFileNames[i]);
+        writer.writeEndElement();
+    }
     writer.writeEndElement();
 
     writer.writeStartElement(QStringLiteral("chars"));
@@ -150,7 +165,23 @@ bool SGFFontExporterBMFontXml::writeDocumentToPath(SGFDocument *doc, const QStri
     writer.writeEndDocument();
     file.close();
 
-    bool pngOk = doc->getSpriteFont().textureAtlas.save(pngPath, "PNG");
+    // Write texture pages
+    bool pngOk = true;
+    const SGFSpriteFont &sf = doc->getSpriteFont();
+    const QVector<QImage> pages = !sf.textureAtlases.isEmpty()
+        ? sf.textureAtlases
+        : QVector<QImage>({ sf.textureAtlas });
+
+    for ( int i = 0; i < pages.size(); ++i ) {
+        const QString outPath = (data.pages <= 1)
+            ? pngPath
+            : (pngDir + QStringLiteral("/") + data.pageFileNames[i]);
+        if ( !pages[i].save(outPath, "PNG") ) {
+            pngOk = false;
+            break;
+        }
+    }
+
     if ( !pngOk ) {
         mLastError = "Save failed.";
     }

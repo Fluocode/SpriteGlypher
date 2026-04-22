@@ -23,6 +23,7 @@ GenerationSettingsPanel::GenerationSettingsPanel(QWidget *parent) :
     QObject::connect(ui->rowPadding, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
     QObject::connect(ui->genColorSwatch, SIGNAL(colorValueChanged(QColor)), this, SLOT(subWidgetValueChanged()));
     QObject::connect(ui->rowSpacing, SIGNAL(valueChanged()), this, SLOT(subWidgetValueChanged()));
+    QObject::connect(ui->checkPaginate, &QCheckBox::toggled, this, &GenerationSettingsPanel::subWidgetValueChanged);
 
     QObject::connect(ui->checkShowAllBounds, &QCheckBox::toggled, this, &GenerationSettingsPanel::showGlyphBoundsChanged);
 }
@@ -44,6 +45,7 @@ void GenerationSettingsPanel::setValue(const SGFGenerationSettings & value)
     ui->rowPadding->setIntValue(mValue.padding);
     ui->rowSpacing->setIntValue(mValue.spacing);
     ui->genColorSwatch->setColorValue(mValue.color);
+    ui->checkPaginate->setChecked(mValue.paginate);
 
     mIsUpdatingGui = false;
 }
@@ -74,6 +76,7 @@ void GenerationSettingsPanel::subWidgetValueChanged()
     mValue.padding = ui->rowPadding->intValue();
     mValue.spacing = ui->rowSpacing->intValue();
     mValue.color = ui->genColorSwatch->colorValue();
+    mValue.paginate = ui->checkPaginate->isChecked();
 
     emit valueChanged(mValue);
 }

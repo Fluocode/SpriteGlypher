@@ -20,7 +20,7 @@
 #include "UI/Widgets/EffectListRow.h"
 
 static const char * APP_TITLE = "Sprite Glypher";
-static const char * APP_VERSION = "1.0.5";
+static const char * APP_VERSION = "1.0.6";
 
 #if defined(Q_OS_MAC)
     static const char * APP_PLATFORM = "OSX";
@@ -276,7 +276,35 @@ void MainWindow::recreateGuiFromDocument()
 void MainWindow::updateAtlasImage()
 {
     SGFSpriteFont spriteFont = mDocument->getSpriteFont();
-    QPixmap pixmap = QPixmap::fromImage(spriteFont.textureAtlas);
+
+    // If the document auto-toggled paginate, reflect it without triggering regeneration loops.
+    if ( ui->generationSettingsPanel != nullptr ) {
+        const SGFGenerationSettings docGen = mDocument->getGenerationSettings();
+        const SGFGenerationSettings uiGen = ui->generationSettingsPanel->getValue();
+        if ( docGen.paginate != uiGen.paginate ) {
+            ui->generationSettingsPanel->setValue(docGen);
+        }
+    }
+
+    const int pageCount = !spriteFont.textureAtlases.isEmpty()
+        ? spriteFont.textureAtlases.size()
+        : (!spriteFont.textureAtlas.isNull() ? 1 : 0);
+    const int pageIndex = qBound(0, mAtlasPreviewPage, pageCount - 1);
+    mAtlasPreviewPage = pageIndex;
+
+    if ( ui->spinAtlasPage != nullptr ) {
+        const bool old = ui->spinAtlasPage->blockSignals(true);
+        ui->spinAtlasPage->setMaximum(std::max(1, pageCount));
+        ui->spinAtlasPage->setValue(std::max(1, pageIndex + 1));
+        ui->spinAtlasPage->setEnabled(pageCount > 1);
+        ui->spinAtlasPage->blockSignals(old);
+    }
+
+    QImage atlasImg = spriteFont.textureAtlas;
+    if ( !spriteFont.textureAtlases.isEmpty() ) {
+        atlasImg = spriteFont.textureAtlases[pageIndex];
+    }
+    QPixmap pixmap = QPixmap::fromImage(atlasImg);
     int pixelRatio = 1;
 
     if ( mRetinaEnabled )
@@ -302,6 +330,9 @@ void MainWindow::updateAtlasImage()
     {
         for( SGFGlyph & glyph : spriteFont.glyphs )
         {
+            if ( glyph.atlasPage != pageIndex ) {
+                continue;
+            }
             QRect rect = glyph.atlasRect;
             rect = QRect((rect.x() / pixelRatio), (rect.y() / pixelRatio), (rect.width() / pixelRatio), (rect.height() / pixelRatio));
             mGraphicsScene.addRect(rect, QPen(QColor(255,0,0,180)), QBrush(QColor(0,0,0,0)));
@@ -312,7 +343,10 @@ void MainWindow::updateAtlasImage()
     ui->atlasGraphicsView->setRenderHint(QPainter::SmoothPixmapTransform);
     ui->atlasGraphicsView->setTransform(QTransform().scale(mCurrentZoom, mCurrentZoom));
 
-    ui->labelAtlasSize->setText(QString("(%1,%2)").arg(QString::number(spriteFont.textureAtlas.width()), QString::number(spriteFont.textureAtlas.height())));
+    ui->labelAtlasSize->setText(QString("(%1,%2)%3")
+        .arg(QString::number(atlasImg.width()), QString::number(atlasImg.height()))
+        .arg(pageCount > 1 ? QStringLiteral("  page:%1/%2").arg(pageIndex + 1).arg(pageCount)
+                           : (pageCount == 1 ? QString() : QStringLiteral("  pages:0"))));
     ui->labelZoom->setText(QString("%1%").arg(QString::number((int)(mCurrentZoom * 100))));
     if ( ui->zoomSlider != nullptr ) {
         const int z = qBound(25, static_cast<int>(std::round(mCurrentZoom * 100.0f)), 400);
@@ -327,6 +361,12 @@ void MainWindow::updateAtlasImage()
     updateEffectRowPreviews();
 
     return;
+}
+
+void MainWindow::on_spinAtlasPage_valueChanged(int value)
+{
+    mAtlasPreviewPage = std::max(0, value - 1);
+    updateAtlasImage();
 }
 
 
