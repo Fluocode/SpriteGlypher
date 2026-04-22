@@ -55,6 +55,7 @@ public:
     SGFPadding effectPadding;   //< How much additional padding have we added on top of the original glyph?
     SGFPadding advancePadding;  //< Padding that should contribute to spacing (excludes pure shadows).
     QRect atlasRect;        //< Output from the generation process
+    int atlasPage = 0;      //< Texture page index for multi-page atlases.
 
     QVector<KerningPair> kerningPairs;  //< Vector of kerning pairs
 

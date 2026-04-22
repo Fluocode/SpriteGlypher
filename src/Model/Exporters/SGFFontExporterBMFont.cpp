@@ -68,7 +68,20 @@ bool SGFFontExporterBMFont::writeDocumentToPath(SGFDocument *doc, const QString 
         return false;
     }
 
-    data.page0FileName = QFileInfo(pngPath).fileName();
+    const QFileInfo pngInfo(pngPath);
+    const QString pngDir = pngInfo.dir().absolutePath();
+    const QString pngBase = pngInfo.completeBaseName();
+    const QString pngExt = pngInfo.suffix().isEmpty() ? QStringLiteral("png") : pngInfo.suffix();
+
+    data.pageFileNames.clear();
+    if ( data.pages <= 1 ) {
+        data.pageFileNames.append(pngInfo.fileName());
+    } else {
+        for ( int i = 0; i < data.pages; ++i ) {
+            data.pageFileNames.append(QStringLiteral("%1_%2.%3").arg(pngBase).arg(i).arg(pngExt));
+        }
+    }
+    data.page0FileName = !data.pageFileNames.isEmpty() ? data.pageFileNames.first() : pngInfo.fileName();
 
     QString padding = QStringLiteral("%1,%2,%3,%4")
             .arg(data.paddingUp)
@@ -109,11 +122,13 @@ bool SGFFontExporterBMFont::writeDocumentToPath(SGFDocument *doc, const QString 
     common << QStringLiteral("blueChnl=%1").arg(data.blueChnl);
     lines << common.join(QLatin1Char(' '));
 
-    QStringList page;
-    page << QStringLiteral("page");
-    page << QStringLiteral("id=%1").arg(0);
-    page << QStringLiteral("file=\"%1\"").arg(data.page0FileName);
-    lines << page.join(QLatin1Char(' '));
+    for ( int i = 0; i < data.pageFileNames.size(); ++i ) {
+        QStringList page;
+        page << QStringLiteral("page");
+        page << QStringLiteral("id=%1").arg(i);
+        page << QStringLiteral("file=\"%1\"").arg(data.pageFileNames[i]);
+        lines << page.join(QLatin1Char(' '));
+    }
 
     QStringList charsHeader;
     charsHeader << QStringLiteral("chars");
@@ -161,7 +176,23 @@ bool SGFFontExporterBMFont::writeDocumentToPath(SGFDocument *doc, const QString 
     textStream << lines.join(QStringLiteral("\n"));
     file.close();
 
-    bool pngOk = doc->getSpriteFont().textureAtlas.save(pngPath, "PNG");
+    // Write texture pages
+    bool pngOk = true;
+    const SGFSpriteFont &sf = doc->getSpriteFont();
+    const QVector<QImage> pageImgs = !sf.textureAtlases.isEmpty()
+        ? sf.textureAtlases
+        : QVector<QImage>({ sf.textureAtlas });
+
+    for ( int i = 0; i < pageImgs.size(); ++i ) {
+        const QString outPath = (data.pages <= 1)
+            ? pngPath
+            : (pngDir + QStringLiteral("/") + data.pageFileNames[i]);
+        if ( !pageImgs[i].save(outPath, "PNG") ) {
+            pngOk = false;
+            break;
+        }
+    }
+
     if ( !pngOk ) {
         mLastError = "Save failed.";
     }

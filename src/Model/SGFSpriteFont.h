@@ -9,12 +9,14 @@ struct SGFSpriteFont
 {
     QVector<SGFGlyph> glyphs;
     QImage textureAtlas;
+    QVector<QImage> textureAtlases; // Page 0..N-1, page0 mirrors textureAtlas.
     bool doGlyphsFit;
     bool isNull;
     double generationTime;
 
     SGFSpriteFont() :
         textureAtlas(),
+        textureAtlases(),
         doGlyphsFit(false),
         isNull(true)
     { }

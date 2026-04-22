@@ -101,6 +101,8 @@ private slots:
 
     void on_zoomSlider_valueChanged(int value);
 
+    void on_spinAtlasPage_valueChanged(int value);
+
     void on_actionSave_triggered();
 
     void on_actionOpen_triggered();
@@ -139,6 +141,7 @@ private:
     float mCurrentZoom;
     bool mRetinaEnabled;
     bool mRenderGlyphRects;
+    int mAtlasPreviewPage = 0;
     Ui::MainWindow *ui;
     QGraphicsScene mGraphicsScene;
     SGFDocument::Ptr mDocument;

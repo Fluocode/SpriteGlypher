@@ -11,9 +11,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.3</string>
+	<string>1.0.6</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.3</string>
+	<string>1.0.6</string>
 	<key>CFBundleExecutable</key>
 	<string>SpriteGlypher</string>
 	<key>NSHumanReadableCopyright</key>

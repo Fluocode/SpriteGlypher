@@ -79,15 +79,27 @@ bool SGFFontBMFontExport::buildExportData(SGFDocument *doc, SGFBMFontExportData 
         data.base = fontMetrics.ascent();
     }
 
-    data.scaleW = spriteFont.textureAtlas.width();
-    data.scaleH = spriteFont.textureAtlas.height();
-    data.pages = 1;
+    data.pages = (!spriteFont.textureAtlases.isEmpty() ? spriteFont.textureAtlases.size() : 1);
+    // BMFont has one common scaleW/scaleH. Use max over pages for compatibility with consumers.
+    int maxPageW = spriteFont.textureAtlas.width();
+    int maxPageH = spriteFont.textureAtlas.height();
+    if ( !spriteFont.textureAtlases.isEmpty() ) {
+        maxPageW = 0;
+        maxPageH = 0;
+        for ( const QImage &img : spriteFont.textureAtlases ) {
+            maxPageW = std::max(maxPageW, img.width());
+            maxPageH = std::max(maxPageH, img.height());
+        }
+    }
+    data.scaleW = maxPageW;
+    data.scaleH = maxPageH;
     data.packed = 0;
     data.alphaChnl = 0;
     data.redChnl = 4;
     data.greenChnl = 4;
     data.blueChnl = 4;
 
+    data.pageFileNames.clear();
     data.page0FileName.clear();
     data.chars.clear();
     data.kernings.clear();
@@ -112,7 +124,7 @@ bool SGFFontBMFontExport::buildExportData(SGFDocument *doc, SGFBMFontExportData 
         entry.y = glyph.atlasRect.y();
         entry.width = glyph.atlasRect.width();
         entry.height = glyph.atlasRect.height();
-        entry.page = 0;
+        entry.page = static_cast<quint8>(qBound(0, glyph.atlasPage, 255));
         entry.chnl = 15;
 
         if ( fromPng ) {

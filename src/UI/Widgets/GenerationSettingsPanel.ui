@@ -173,6 +173,21 @@
      </property>
     </widget>
    </item>
+   <item>
+    <widget class="QCheckBox" name="checkPaginate">
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Paginate atlas (multiple PNGs)</string>
+     </property>
+     <property name="toolTip">
+      <string>When enabled, extra glyphs spill into additional texture pages. BMFont exports will write multiple pages and multiple PNG files.</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <customwidgets>

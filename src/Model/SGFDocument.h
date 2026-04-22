@@ -111,6 +111,7 @@ private:
      * @return Did the glyphs fit onto atlas?
      */
     bool layoutGlyphs(SGFSpriteFont & spriteFont, const SGFGenerationSettings & settings, bool doPaint);
+    bool layoutGlyphsPaged(SGFSpriteFont & spriteFont, const SGFGenerationSettings & settings, bool doPaint);
 
 
     // Signals
