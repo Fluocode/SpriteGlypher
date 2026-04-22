@@ -1,7 +1,6 @@
 #ifndef SGFDOCUMENT_H
 #define SGFDOCUMENT_H
 
-#include <QFontDatabase>
 #include <QObject>
 #include "SGFTypes.h"
 #include "SGFGlyph.h"
@@ -124,7 +123,6 @@ public slots:
 
     // Member Variables
 private:
-    QFontDatabase mFontDatabase;
     SGFSpriteFont mSpriteFont;
     bool mIsDirty;
     bool mHasUnsavedData;

@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include <QApplication>
+#include <QFontDatabase>
 #include <QFile>
 #include <QFileInfo>
 #include <QtCore>
@@ -367,7 +368,7 @@ bool SGFDocument::generateGlyphs()
     }
     else
     {
-        glyphFont = mFontDatabase.font(mInputSettings.fontFamily, mInputSettings.fontStyle, mInputSettings.fontSize);
+        glyphFont = QFontDatabase::font(mInputSettings.fontFamily, mInputSettings.fontStyle, mInputSettings.fontSize);
     }
 
     QVector<QChar> characters = mInputSettings.uniqueCharacters();
@@ -445,6 +446,7 @@ bool SGFDocument::generateGlyphs()
     }
 
     //qDebug() << "Kerning Count: " << kerningCount;
+    Q_UNUSED(kerningCount);
 
     mSpriteFont.generationTime = (double)timer.nsecsElapsed() / 1000000000.0;
     return true;

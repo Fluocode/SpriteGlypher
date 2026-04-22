@@ -70,7 +70,6 @@ win32:CONFIG(release, debug|release) {
 # Release only: bundle Qt into the .app, then create SpriteGlypher.dmg next to it (macdeployqt -dmg).
 macx:CONFIG(release, debug|release) {
     DEPLOY_APP = $$clean_path($$OUT_PWD/$$DESTDIR/$${TARGET}.app)
-    QMAKE_POST_LINK += $$quote($$[QT_INSTALL_BINS]/macdeployqt) $$quote($$shell_path($$DEPLOY_APP)) -dmg $$escape_expand(\\n\\t)
     QMAKE_POST_LINK += $$quote($$shell_path($$PWD/tools/package-macos.sh)) $$quote($$shell_path($$DEPLOY_APP)) --dmg $$escape_expand(\\n\\t)
 }
 
